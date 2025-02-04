@@ -15,9 +15,11 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="text-gray-700">
                         {{ __('Dashboard') }}
                     </x-nav-link>
-
                     <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')" class="text-gray-700">
-                        {{ __('Almacén') }}
+                        {{ __('Productos') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('medical-specialties.index')" :active="request()->routeIs('medical-specialties.*')" class="text-gray-700">
+                        {{ __('Especialidades') }}
                     </x-nav-link>
 
                     @if (Auth::user()->isSuperAdmin())
@@ -82,7 +84,11 @@
             </x-responsive-nav-link>
 
             <x-responsive-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
-                {{ __('Almacén') }}
+                {{ __('Productos') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('medical-specialties.index')" :active="request()->routeIs('medical-specialties.*')">
+                {{ __('Especialidades') }}
             </x-responsive-nav-link>
 
             @if (Auth::user()->isSuperAdmin())
