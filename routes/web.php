@@ -5,6 +5,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MedicalSpecialtyController;
+use App\Http\Controllers\RepresentativeController;
 use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\SuperAdmin;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,9 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
     Route::get('/medical-specialties', [MedicalSpecialtyController::class, 'index'])->name('medical-specialties.index');
     Route::post('/medical-specialties', [MedicalSpecialtyController::class, 'store'])->name('medical-specialties.store');
     Route::delete('/medical-specialties/{medicalSpecialty}', [MedicalSpecialtyController::class, 'destroy'])->name('medical-specialties.destroy');
+
+    // Rutas de representantes
+    Route::resource('representatives', RepresentativeController::class);
 });
 
 // Rutas de administración

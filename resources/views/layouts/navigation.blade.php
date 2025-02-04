@@ -21,6 +21,9 @@
                     <x-nav-link :href="route('medical-specialties.index')" :active="request()->routeIs('medical-specialties.*')" class="text-gray-700">
                         {{ __('Especialidades') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('representatives.index')" :active="request()->routeIs('representatives.*')" class="text-gray-700">
+                        {{ __('Representantes') }}
+                    </x-nav-link>
 
                     @if (Auth::user()->isSuperAdmin())
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')" class="text-gray-700">
@@ -89,6 +92,10 @@
 
             <x-responsive-nav-link :href="route('medical-specialties.index')" :active="request()->routeIs('medical-specialties.*')">
                 {{ __('Especialidades') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('representatives.index')" :active="request()->routeIs('representatives.*')">
+                {{ __('Representantes') }}
             </x-responsive-nav-link>
 
             @if (Auth::user()->isSuperAdmin())

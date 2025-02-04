@@ -25,33 +25,29 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-50">
+        <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')
 
             <!-- Page Heading -->
             @isset($header)
                 <header class="bg-white shadow">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        <h1 class="text-2xl font-semibold text-pharma">{{ $header }}</h1>
+                        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                            {{ $header }}
+                        </h2>
                     </div>
                 </header>
             @endisset
 
             <!-- Page Content -->
-            <main class="py-4">
+            <main>
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     {{ $slot }}
                 </div>
             </main>
-
-            <!-- Footer -->
-            <footer class="bg-white shadow mt-8">
-                <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-                    <p class="text-center text-sm text-gray-500">
-                        &copy; {{ date('Y') }} PharmaMuestras. Todos los derechos reservados.
-                    </p>
-                </div>
-            </footer>
         </div>
+
+        <!-- Scripts -->
+        @stack('scripts')
     </body>
 </html>
