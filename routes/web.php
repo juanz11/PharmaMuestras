@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\SuperAdmin;
@@ -18,6 +19,9 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Rutas de productos
+    Route::resource('products', ProductController::class);
 });
 
 // Rutas de administración
