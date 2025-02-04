@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\MedicalSpecialty;
 
 class Product extends Model
 {
@@ -12,13 +13,19 @@ class Product extends Model
 
     protected $fillable = [
         'name',
-        'valor',
         'quantity',
         'image_path',
-        'category',
+        'valor',
+        'medical_specialty_id'
     ];
 
     protected $casts = [
         'valor' => 'decimal:2',
+        'quantity' => 'integer'
     ];
+
+    public function medicalSpecialty()
+    {
+        return $this->belongsTo(MedicalSpecialty::class);
+    }
 }

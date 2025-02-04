@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\MedicalSpecialty;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -22,7 +23,8 @@ class ProductController extends Controller
      */
     public function create()
     {
-        return view('products.create');
+        $specialties = MedicalSpecialty::all();
+        return view('products.create', compact('specialties'));
     }
 
     /**
@@ -38,7 +40,7 @@ class ProductController extends Controller
             'name' => $validatedData['name'],
             'quantity' => $validatedData['quantity'],
             'valor' => $validatedData['valor'],
-            'category' => $validatedData['category'],
+            'medical_specialty_id' => $validatedData['medical_specialty_id'],
             'image_path' => $imagePath
         ]);
 
@@ -51,7 +53,8 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        return view('products.edit', compact('product'));
+        $specialties = MedicalSpecialty::all();
+        return view('products.edit', compact('product', 'specialties'));
     }
 
     /**
@@ -99,7 +102,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'quantity' => 'required|integer|min:0',
             'valor' => 'required|numeric|min:0',
-            'category' => 'required|string|max:255',
+            'medical_specialty_id' => 'required|exists:medical_specialties,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
     }

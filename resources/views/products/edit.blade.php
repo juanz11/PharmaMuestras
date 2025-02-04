@@ -43,6 +43,22 @@
                             <x-input-error class="mt-2" :messages="$errors->get('category')" />
                         </div>
 
+                        <div class="mt-4">
+                            <x-input-label for="medical_specialty_id" :value="__('Especialidad Médica')" />
+                            <select id="medical_specialty_id" 
+                                   name="medical_specialty_id" 
+                                   class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                   required>
+                                <option value="">Seleccione una especialidad</option>
+                                @foreach($specialties as $specialty)
+                                    <option value="{{ $specialty->id }}" {{ (old('medical_specialty_id', $product->medical_specialty_id) == $specialty->id) ? 'selected' : '' }}>
+                                        {{ $specialty->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('medical_specialty_id')" class="mt-2" />
+                        </div>
+
                         <div>
                             <x-input-label for="image" :value="__('Imagen del Producto')" />
                             <div class="mt-2">

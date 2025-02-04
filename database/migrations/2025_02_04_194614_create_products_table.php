@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('name');
             $table->integer('quantity');
             $table->string('image_path');
-            $table->string('category');
             $table->decimal('valor', 10, 2);
+            $table->foreignId('medical_specialty_id')->constrained();
             $table->timestamps();
             $table->softDeletes();
         });
