@@ -30,21 +30,15 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:0',
-            'price' => 'required|numeric|min:0',
-            'category' => 'required|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
+        $validatedData = $this->validateProduct($request);
 
         $imagePath = $request->file('image')->store('products', 'public');
 
         Product::create([
-            'name' => $request->name,
-            'quantity' => $request->quantity,
-            'price' => $request->price,
-            'category' => $request->category,
+            'name' => $validatedData['name'],
+            'quantity' => $validatedData['quantity'],
+            'valor' => $validatedData['valor'],
+            'category' => $validatedData['category'],
             'image_path' => $imagePath
         ]);
 
@@ -65,15 +59,9 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:0',
-            'price' => 'required|numeric|min:0',
-            'category' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
+        $validatedData = $this->validateProduct($request);
 
-        $data = $request->except('image');
+        $data = $validatedData;
 
         if ($request->hasFile('image')) {
             // Eliminar la imagen anterior
@@ -103,5 +91,16 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')
             ->with('success', 'Producto eliminado exitosamente.');
+    }
+
+    protected function validateProduct(Request $request): array
+    {
+        return $request->validate([
+            'name' => 'required|string|max:255',
+            'quantity' => 'required|integer|min:0',
+            'valor' => 'required|numeric|min:0',
+            'category' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
     }
 }

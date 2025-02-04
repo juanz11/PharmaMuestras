@@ -24,10 +24,16 @@
                             <x-input-error class="mt-2" :messages="$errors->get('quantity')" />
                         </div>
 
-                        <div>
-                            <x-input-label for="price" :value="__('Precio')" />
-                            <x-text-input id="price" name="price" type="number" step="0.01" class="mt-1 block w-full" :value="old('price')" required min="0" />
-                            <x-input-error class="mt-2" :messages="$errors->get('price')" />
+                        <div class="mt-4">
+                            <x-input-label for="valor" :value="__('Valor')" />
+                            <x-text-input id="valor" 
+                                      name="valor" 
+                                      type="number" 
+                                      step="0.01" 
+                                      class="mt-1 block w-full" 
+                                      :value="old('valor')" 
+                                      required />
+                            <x-input-error :messages="$errors->get('valor')" class="mt-2" />
                         </div>
 
                         <div>

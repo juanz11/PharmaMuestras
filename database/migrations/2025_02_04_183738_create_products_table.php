@@ -16,9 +16,10 @@ return new class extends Migration
             $table->string('name');
             $table->integer('quantity');
             $table->string('image_path');
-            $table->decimal('price', 10, 2);
             $table->string('category');
+            $table->decimal('valor', 10, 2);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
