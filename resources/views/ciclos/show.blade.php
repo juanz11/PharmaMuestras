@@ -4,20 +4,46 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Detalles del Ciclo
             </h2>
-            @if($ciclo->status === 'pendiente')
-            <form action="{{ route('ciclos.deliver', $ciclo) }}" method="POST" class="inline">
-                @csrf
-                @method('PUT')
-                <button type="submit" class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important;">
-                    Efectuar Entrega
-                </button>
-            </form>
-            @endif
+            <div class="flex space-x-4">
+                @if($ciclo->status === 'pendiente')
+                <form action="{{ route('ciclos.deliver', $ciclo) }}" method="POST" class="inline">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important;">
+                        Efectuar Entrega
+                    </button>
+                </form>
+                @endif
+                <a href="{{ route('ciclos.pdf', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded" style="background-color: #dc3545 !important;">
+                    Descargar PDF
+                </a>
+            </div>
         </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            @if (session('error'))
+                <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow-md" role="alert">
+                    <div class="flex items-center mb-2">
+                        <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <h3 class="text-lg font-bold text-red-800">Error en la Entrega</h3>
+                    </div>
+                    <div class="text-red-700">
+                        {!! session('error') !!}
+                    </div>
+                </div>
+            @endif
+
+            @if (session('success'))
+                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">¡Éxito!</strong>
+                    <span class="block sm:inline">{{ session('success') }}</span>
+                </div>
+            @endif
+
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 <!-- Información General -->
                 <div class="mb-6">

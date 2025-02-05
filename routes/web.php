@@ -37,6 +37,8 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
 
     // Rutas de ciclos
     Route::resource('ciclos', CicloController::class);
+    Route::get('/ciclos/{ciclo}', [CicloController::class, 'show'])->name('ciclos.show');
+    Route::get('/ciclos/{ciclo}/pdf', [CicloController::class, 'generatePdf'])->name('ciclos.pdf');
     Route::get('ciclos/{ciclo}/reporte', [CicloController::class, 'generarReporte'])->name('ciclos.reporte');
     Route::put('/ciclos/{ciclo}/deliver', [CicloController::class, 'deliver'])->name('ciclos.deliver');
 });

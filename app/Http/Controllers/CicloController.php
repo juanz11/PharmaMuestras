@@ -96,18 +96,93 @@ class CicloController extends Controller
         return view('ciclos.show', compact('ciclo', 'detallesPorRepresentante', 'totalesPorProducto'));
     }
 
+    public function generatePdf(Ciclo $ciclo)
+    {
+        $ciclo->load(['detallesCiclo.representante.doctors', 'detallesCiclo.especialidad', 'detallesCiclo.producto']);
+        $detallesPorRepresentante = $ciclo->detallesCiclo->groupBy('representante_id');
+        
+        $pdf = \PDF::loadView('ciclos.pdf', [
+            'ciclo' => $ciclo,
+            'detallesPorRepresentante' => $detallesPorRepresentante
+        ]);
+        
+        return $pdf->download('ciclo-' . $ciclo->id . '.pdf');
+    }
+
     public function deliver(Ciclo $ciclo)
     {
         if ($ciclo->status !== 'pendiente') {
             return back()->with('error', 'Este ciclo ya ha sido entregado.');
         }
 
-        $ciclo->update([
-            'status' => 'entregado',
-            'delivered_at' => now()
-        ]);
+        try {
+            DB::beginTransaction();
+            
+            // Verificar stock disponible
+            $faltantes = [];
+            foreach ($ciclo->detallesCiclo as $detalle) {
+                $producto = $detalle->producto;
+                if ($producto->quantity < $detalle->cantidad_con_porcentaje) {
+                    $faltantes[] = [
+                        'producto' => $producto->name,
+                        'requerido' => $detalle->cantidad_con_porcentaje,
+                        'disponible' => $producto->quantity
+                    ];
+                }
+            }
 
-        return redirect()->route('ciclos.show', $ciclo)->with('success', 'Ciclo marcado como entregado exitosamente.');
+            // Si hay faltantes, mostrar error
+            if (!empty($faltantes)) {
+                DB::rollBack();
+                $mensaje = "<div class='space-y-4'>";
+                $mensaje .= "<p class='font-semibold text-lg'>Los siguientes productos no tienen suficiente stock:</p>";
+                $mensaje .= "<div class='space-y-2'>";
+                
+                // Agrupar por producto para evitar repeticiones
+                $faltantesAgrupados = collect($faltantes)->groupBy('producto')->map(function($grupo) {
+                    return [
+                        'producto' => $grupo->first()['producto'],
+                        'requeridos' => $grupo->pluck('requerido'),
+                        'disponible' => $grupo->first()['disponible']
+                    ];
+                });
+
+                foreach ($faltantesAgrupados as $faltante) {
+                    $totalRequerido = $faltante['requeridos']->sum();
+                    $mensaje .= "<div class='faltante-item'>";
+                    $mensaje .= "<p class='font-medium'>{$faltante['producto']}</p>";
+                    $mensaje .= "<div class='ml-4'>";
+                    $mensaje .= "<p>Total Requerido: <span class='font-semibold'>{$totalRequerido}</span></p>";
+                    $mensaje .= "<p>Disponible: <span class='font-semibold'>{$faltante['disponible']}</span></p>";
+                    $mensaje .= "<p class='text-red-700'>Faltante: <span class='font-semibold'>" . ($totalRequerido - $faltante['disponible']) . "</span></p>";
+                    $mensaje .= "</div>";
+                    $mensaje .= "</div>";
+                }
+                
+                $mensaje .= "</div></div>";
+                return back()->with('error', $mensaje);
+            }
+
+            // Reducir stock
+            foreach ($ciclo->detallesCiclo as $detalle) {
+                $producto = $detalle->producto;
+                $producto->quantity -= $detalle->cantidad_con_porcentaje;
+                $producto->save();
+            }
+
+            // Actualizar estado del ciclo
+            $ciclo->update([
+                'status' => 'entregado',
+                'delivered_at' => now()
+            ]);
+
+            DB::commit();
+            return back()->with('success', 'Ciclo entregado exitosamente y stock actualizado.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al procesar la entrega: ' . $e->getMessage());
+        }
     }
 
     public function generarReporte(Ciclo $ciclo)
