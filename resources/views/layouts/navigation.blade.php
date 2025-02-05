@@ -5,8 +5,8 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="text-2xl font-bold text-pharma">
-                        PharmaMuestras
+                    <a href="{{ route('dashboard') }}">
+                        <img src="{{ asset('images/logo/logo.png') }}" alt="PharmaMuestras Logo" class="h-12 w-auto">
                     </a>
                 </div>
 
