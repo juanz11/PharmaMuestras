@@ -35,8 +35,11 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Obtener el rol de usuario normal
-        $userRole = Role::where('slug', 'user')->first();
+        // Obtener o crear el rol de usuario normal
+        $userRole = Role::firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'Usuario']
+        );
 
         $user = User::create([
             'name' => $request->name,

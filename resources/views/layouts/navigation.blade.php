@@ -24,6 +24,9 @@
                     <x-nav-link :href="route('representatives.index')" :active="request()->routeIs('representatives.*')" class="text-gray-700">
                         {{ __('Representantes') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('ciclos.index')" :active="request()->routeIs('ciclos.*')" class="text-gray-700">
+                        {{ __('Ciclos') }}
+                    </x-nav-link>
 
                     @if (Auth::user()->isSuperAdmin())
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')" class="text-gray-700">
@@ -96,6 +99,10 @@
 
             <x-responsive-nav-link :href="route('representatives.index')" :active="request()->routeIs('representatives.*')">
                 {{ __('Representantes') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('ciclos.index')" :active="request()->routeIs('ciclos.*')">
+                {{ __('Ciclos') }}
             </x-responsive-nav-link>
 
             @if (Auth::user()->isSuperAdmin())

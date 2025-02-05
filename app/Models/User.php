@@ -85,4 +85,12 @@ class User extends Authenticatable
     {
         return $this->is_active;
     }
+
+    /**
+     * Get the doctors associated with this representative.
+     */
+    public function doctores()
+    {
+        return $this->hasMany(RepresentativeDoctor::class, 'representative_id');
+    }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MedicalSpecialtyController;
 use App\Http\Controllers\RepresentativeController;
+use App\Http\Controllers\CicloController;
 use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\SuperAdmin;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,11 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
 
     // Rutas de representantes
     Route::resource('representatives', RepresentativeController::class);
+
+    // Rutas de ciclos
+    Route::resource('ciclos', CicloController::class);
+    Route::get('ciclos/{ciclo}/reporte', [CicloController::class, 'generarReporte'])->name('ciclos.reporte');
+    Route::put('/ciclos/{ciclo}/deliver', [CicloController::class, 'deliver'])->name('ciclos.deliver');
 });
 
 // Rutas de administración
