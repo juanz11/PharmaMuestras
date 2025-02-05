@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Ciclo;
 use App\Models\Product;
 use App\Models\Representative;
+use App\Models\CicloProduct;
+use App\Models\DetalleCiclo;
 use App\Models\MedicalSpecialty;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,7 +23,10 @@ class CicloController extends Controller
 
     public function create()
     {
-        $representantes = Representative::with('doctors.medicalSpecialty')->get();
+        $representantes = Representative::with(['doctors' => function($query) {
+            $query->select('id', 'representative_id', 'medical_specialty_id', 'doctors_count');
+        }, 'doctors.medicalSpecialty'])->get();
+        
         $especialidades = MedicalSpecialty::with('products')->get();
         $productos = Product::all();
         
@@ -108,12 +114,20 @@ class CicloController extends Controller
         $ciclo->load(['detallesCiclo.representante.doctors', 'detallesCiclo.especialidad', 'detallesCiclo.producto']);
         $detallesPorRepresentante = $ciclo->detallesCiclo->groupBy('representante_id');
         
-        $pdf = \PDF::loadView('ciclos.pdf', [
+        $pdf = Pdf::loadView('ciclos.pdf', [
             'ciclo' => $ciclo,
             'detallesPorRepresentante' => $detallesPorRepresentante
         ]);
         
         return $pdf->download('ciclo-' . $ciclo->id . '.pdf');
+    }
+
+    public function generateInvoice(Ciclo $ciclo)
+    {
+        $pdf = Pdf::loadView('ciclos.invoice', compact('ciclo'));
+        $pdf->setPaper('a4');
+        
+        return $pdf->download('facturas_ciclo_' . $ciclo->id . '.pdf');
     }
 
     public function deliver(Ciclo $ciclo)
