@@ -14,7 +14,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::latest()->paginate(12);
+        $products = Product::with('medicalSpecialty')->paginate(12);
         return view('products.index', compact('products'));
     }
 
@@ -23,8 +23,8 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $specialties = MedicalSpecialty::all();
-        return view('products.create', compact('specialties'));
+        $medicalSpecialties = MedicalSpecialty::all();
+        return view('products.create', ['specialties' => $medicalSpecialties]);
     }
 
     /**
@@ -32,20 +32,31 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $this->validateProduct($request);
-
-        $imagePath = $request->file('image')->store('products', 'public');
-
-        Product::create([
-            'name' => $validatedData['name'],
-            'quantity' => $validatedData['quantity'],
-            'valor' => $validatedData['valor'],
-            'medical_specialty_id' => $validatedData['medical_specialty_id'],
-            'image_path' => $imagePath
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'medical_specialty_id' => 'required|exists:medical_specialties,id',
+            'quantity' => 'required|integer|min:0',
+            'valor' => 'required|numeric|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        return redirect()->route('products.index')
-            ->with('success', 'Producto creado exitosamente.');
+        try {
+            $product = new Product($request->except('image'));
+
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('products', 'public');
+                $product->image_path = $imagePath;
+            } else {
+                $product->image_path = 'default.jpg';
+            }
+
+            $product->save();
+
+            return redirect()->route('products.index')
+                ->with('success', 'Producto creado exitosamente.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al crear el producto: ' . $e->getMessage());
+        }
     }
 
     /**

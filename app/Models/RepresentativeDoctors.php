@@ -18,7 +18,7 @@ class RepresentativeDoctors extends Model
         return $this->belongsTo(Representative::class);
     }
 
-    public function specialty()
+    public function medicalSpecialty()
     {
         return $this->belongsTo(MedicalSpecialty::class, 'medical_specialty_id');
     }

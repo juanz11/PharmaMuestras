@@ -42,20 +42,27 @@
                             <x-input-error class="mt-2" :messages="$errors->get('category')" />
                         </div>
 
-                        <div class="mt-4">
-                            <x-input-label for="medical_specialty_id" :value="__('Especialidad Médica')" />
+                        <div class="mb-4">
+                            <label for="medical_specialty_id" class="block text-sm font-medium text-gray-700">Especialidad Médica</label>
+                            @if($specialties->count() > 0)
                             <select id="medical_specialty_id" 
-                                   name="medical_specialty_id" 
-                                   class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                   required>
-                                <option value="">Seleccione una especialidad</option>
+                                    name="medical_specialty_id" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <option value="">Seleccionar Especialidad</option>
                                 @foreach($specialties as $specialty)
                                     <option value="{{ $specialty->id }}" {{ old('medical_specialty_id') == $specialty->id ? 'selected' : '' }}>
                                         {{ $specialty->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            <x-input-error :messages="$errors->get('medical_specialty_id')" class="mt-2" />
+                            @else
+                            <div class="mt-1 text-sm text-red-600">
+                                No hay especialidades médicas disponibles. Por favor, <a href="{{ route('medical-specialties.index') }}" class="text-blue-600 hover:text-blue-800">cree una especialidad</a> primero.
+                            </div>
+                            @endif
+                            @error('medical_specialty_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>

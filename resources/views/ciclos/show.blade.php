@@ -101,8 +101,8 @@
                                         <tbody class="bg-white divide-y divide-gray-200">
                                             @foreach($detalles as $detalle)
                                             <tr>
-                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->especialidad->name }}</td>
-                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->producto->name }}</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->especialidad ? $detalle->especialidad->name : 'Especialidad eliminada' }}</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_por_doctor }}</td>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_total }}</td>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_con_porcentaje }}</td>
@@ -129,24 +129,27 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @php
-                                    $totalesPorEspecialidad = collect($detallesPorRepresentante)
+                                    $resumenPorEspecialidad = collect($detallesPorRepresentante)
                                         ->flatten(1)
-                                        ->groupBy('especialidad.name')
+                                        ->groupBy('especialidad_id')
                                         ->map(function ($grupo) {
                                             return $grupo->sum('cantidad_con_porcentaje');
                                         });
                                 @endphp
                                 
-                                @foreach($totalesPorEspecialidad as $especialidad => $total)
-                                <tr>
-                                    <td class="px-4 py-2 whitespace-nowrap">{{ $especialidad }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap">{{ $total }}</td>
-                                </tr>
+                                @foreach($resumenPorEspecialidad as $especialidadId => $total)
+                                    @php
+                                        $especialidad = \App\Models\MedicalSpecialty::find($especialidadId);
+                                    @endphp
+                                    <tr>
+                                        <td class="px-4 py-2 whitespace-nowrap">{{ $especialidad ? $especialidad->name : 'Especialidad eliminada' }}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap">{{ $total }}</td>
+                                    </tr>
                                 @endforeach
                                 
                                 <tr class="bg-gray-50 font-semibold">
                                     <td class="px-4 py-2 whitespace-nowrap">Total General</td>
-                                    <td class="px-4 py-2 whitespace-nowrap">{{ $totalesPorEspecialidad->sum() }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">{{ $resumenPorEspecialidad->sum() }}</td>
                                 </tr>
                             </tbody>
                         </table>

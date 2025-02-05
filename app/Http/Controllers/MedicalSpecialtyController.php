@@ -9,14 +9,14 @@ class MedicalSpecialtyController extends Controller
 {
     public function index()
     {
-        $specialties = MedicalSpecialty::orderBy('name')->get();
+        $specialties = MedicalSpecialty::whereNull('deleted_at')->orderBy('name')->get();
         return view('medical-specialties.index', compact('specialties'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:medical_specialties'
+            'name' => 'required|string|max:255|unique:medical_specialties,name,NULL,id,deleted_at,NULL'
         ]);
 
         MedicalSpecialty::create([
@@ -29,8 +29,13 @@ class MedicalSpecialtyController extends Controller
 
     public function destroy(MedicalSpecialty $medicalSpecialty)
     {
-        $medicalSpecialty->delete();
-        return redirect()->route('medical-specialties.index')
-            ->with('success', 'Especialidad médica eliminada exitosamente.');
+        try {
+            $medicalSpecialty->delete();
+            return redirect()->route('medical-specialties.index')
+                ->with('success', 'Especialidad médica eliminada exitosamente.');
+        } catch (\Exception $e) {
+            return redirect()->route('medical-specialties.index')
+                ->with('error', 'No se puede eliminar esta especialidad porque está siendo utilizada.');
+        }
     }
 }

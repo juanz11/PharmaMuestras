@@ -13,13 +13,8 @@ class MedicalSpecialty extends Model
 
     protected $fillable = ['name'];
 
-    public function productos()
-    {
-        return $this->hasMany(Product::class, 'medical_specialty_id');
-    }
-
     public function products()
     {
-        return $this->hasMany(Product::class, 'medical_specialty_id');
+        return $this->hasMany(Product::class);
     }
 }

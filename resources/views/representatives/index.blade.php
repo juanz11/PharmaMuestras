@@ -78,11 +78,9 @@
                                             <td class="px-6 py-4">
                                                 <div class="space-y-2">
                                                     @foreach($representative->doctors as $doctor)
-                                                        <div class="flex items-center text-sm">
-                                                            <span class="font-medium text-gray-900">{{ $doctor->specialty->name }}:</span>
-                                                            <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium {{ $doctor->doctors_count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800' }}">
-                                                                {{ $doctor->doctors_count }} médicos
-                                                            </span>
+                                                        <div class="flex items-center space-x-2">
+                                                            <span class="font-medium text-gray-900">{{ $doctor->medicalSpecialty->name }}:</span>
+                                                            <span class="text-gray-600">{{ $doctor->doctors_count }} doctores</span>
                                                         </div>
                                                     @endforeach
                                                 </div>

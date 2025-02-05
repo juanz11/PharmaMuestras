@@ -11,7 +11,7 @@ class RepresentativeController extends Controller
 {
     public function index()
     {
-        $representatives = Representative::with('doctors.specialty')->get();
+        $representatives = Representative::with('doctors.medicalSpecialty')->get();
         return view('representatives.index', compact('representatives'));
     }
 
@@ -72,19 +72,12 @@ class RepresentativeController extends Controller
             'zone' => $request->zone,
         ]);
 
-        // Eliminar registros existentes
-        $representative->doctors()->delete();
-
-        // Obtener todas las especialidades
-        $specialties = MedicalSpecialty::all();
-        
-        // Crear un registro para cada especialidad, incluso si no se envió en el request
-        foreach ($specialties as $specialty) {
-            RepresentativeDoctors::create([
-                'representative_id' => $representative->id,
-                'medical_specialty_id' => $specialty->id,
-                'doctors_count' => $request->doctors[$specialty->id] ?? 0
-            ]);
+        // Actualizar el número de doctores para cada especialidad
+        foreach ($request->doctors as $specialtyId => $count) {
+            $representative->doctors()->updateOrCreate(
+                ['medical_specialty_id' => $specialtyId],
+                ['doctors_count' => $count]
+            );
         }
 
         return redirect()->route('representatives.index')

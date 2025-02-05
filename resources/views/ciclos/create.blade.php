@@ -49,11 +49,11 @@
                                 <h4 class="font-semibold mb-2">{{ $especialidad->name }}</h4>
                                 <div class="space-y-4">
                                     <!-- Productos Recomendados -->
-                                    @if($especialidad->productos->isNotEmpty())
+                                    @if($especialidad->products->isNotEmpty())
                                     <div class="bg-gray-50 p-3 rounded">
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Productos Recomendados para esta Especialidad</label>
                                         <div class="space-y-2">
-                                            @foreach($especialidad->productos as $producto)
+                                            @foreach($especialidad->products as $producto)
                                             <div class="flex items-center space-x-2">
                                                 <input type="checkbox" 
                                                     class="producto-recomendado form-checkbox h-4 w-4 text-blue-600"
@@ -230,13 +230,13 @@
                 const div = document.createElement('div');
                 div.className = 'flex items-center space-x-2 mt-2';
                 div.innerHTML = `
-                    <select class="producto-select flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <select class="producto-select flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         <option value="">Seleccionar Producto</option>
                         @foreach($productos as $producto)
                         <option value="{{ $producto->id }}">{{ $producto->name }}</option>
                         @endforeach
                     </select>
-                    <input type="number" class="cantidad-input w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
+                    <input type="number" class="cantidad-input w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
                         placeholder="Cantidad" min="1" value="1">
                     <button type="button" class="eliminar-producto px-2 py-1 text-white bg-red-500 rounded hover:bg-red-600">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

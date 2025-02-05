@@ -20,8 +20,8 @@ class CicloController extends Controller
 
     public function create()
     {
-        $representantes = Representative::with('doctors')->get();
-        $especialidades = MedicalSpecialty::with('productos')->get();
+        $representantes = Representative::with('doctors.medicalSpecialty')->get();
+        $especialidades = MedicalSpecialty::with('products')->get();
         $productos = Product::all();
         
         return view('ciclos.create', compact('representantes', 'especialidades', 'productos'));
@@ -45,7 +45,12 @@ class CicloController extends Controller
 
             foreach ($request->detalles as $detalle) {
                 $representante = Representative::findOrFail($detalle['representante_id']);
-                $cantidadDoctores = $representante->doctors->sum('doctors_count');
+                
+                // Obtener la cantidad de doctores específica para esta especialidad
+                $cantidadDoctores = $representante->doctors()
+                    ->where('medical_specialty_id', $detalle['especialidad_id'])
+                    ->value('doctors_count') ?? 0;
+
                 $cantidadTotal = $detalle['cantidad_por_doctor'] * $cantidadDoctores;
                 $cantidadConPorcentaje = ceil($cantidadTotal * (1 + ($request->porcentaje_hospitalario / 100)));
 
@@ -58,9 +63,11 @@ class CicloController extends Controller
                     'cantidad_con_porcentaje' => $cantidadConPorcentaje
                 ]);
 
-                // Actualizar stock del producto
-                $producto = Product::findOrFail($detalle['producto_id']);
-                $producto->decrement('stock', $cantidadConPorcentaje);
+                // Solo actualizar el stock si hay doctores para esta especialidad
+                if ($cantidadTotal > 0) {
+                    $producto = Product::findOrFail($detalle['producto_id']);
+                    $producto->decrement('stock', $cantidadConPorcentaje);
+                }
             }
 
             DB::commit();
@@ -208,8 +215,10 @@ class CicloController extends Controller
     public function update(Request $request, Ciclo $ciclo)
     {
         if ($ciclo->status !== 'pendiente') {
-            return redirect()->route('ciclos.show', $ciclo)
-                ->with('error', 'No se puede editar un ciclo que ya ha sido entregado.');
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede editar un ciclo que ya ha sido entregado.'
+            ], 422);
         }
 
         try {
@@ -220,13 +229,20 @@ class CicloController extends Controller
                 'porcentaje_hospitalario' => $request->porcentaje_hospitalario,
             ]);
 
-            // Eliminar detalles antiguos
+            // Eliminar todos los detalles existentes
             $ciclo->detallesCiclo()->delete();
 
-            // Crear nuevos detalles
+            // Crear los nuevos detalles
             foreach ($request->detalles as $detalle) {
-                $cantidadTotal = $detalle['cantidad_por_doctor'] * Representative::find($detalle['representante_id'])->doctors->sum('doctors_count');
-                $cantidadConPorcentaje = $cantidadTotal + ($cantidadTotal * ($request->porcentaje_hospitalario / 100));
+                $representante = Representative::findOrFail($detalle['representante_id']);
+                
+                // Obtener la cantidad de doctores específica para esta especialidad
+                $cantidadDoctores = $representante->doctors()
+                    ->where('medical_specialty_id', $detalle['especialidad_id'])
+                    ->value('doctors_count') ?? 0;
+
+                $cantidadTotal = $detalle['cantidad_por_doctor'] * $cantidadDoctores;
+                $cantidadConPorcentaje = ceil($cantidadTotal * (1 + ($request->porcentaje_hospitalario / 100)));
 
                 $ciclo->detallesCiclo()->create([
                     'representante_id' => $detalle['representante_id'],
@@ -239,12 +255,20 @@ class CicloController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('ciclos.show', $ciclo)
-                ->with('success', 'Ciclo actualizado exitosamente.');
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Ciclo actualizado exitosamente',
+                'redirect_url' => route('ciclos.index')
+            ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Error al actualizar el ciclo: ' . $e->getMessage());
+            DB::rollback();
+            Log::error('Error al actualizar ciclo: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el ciclo: ' . $e->getMessage()
+            ], 422);
         }
     }
 
