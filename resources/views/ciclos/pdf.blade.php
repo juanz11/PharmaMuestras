@@ -170,8 +170,8 @@
                 <tbody>
                     @foreach($detalles as $detalle)
                     <tr>
-                        <td>{{ $detalle->especialidad->name }}</td>
-                        <td>{{ $detalle->producto->name }}</td>
+                        <td>{{ $detalle->especialidad ? $detalle->especialidad->name : 'Especialidad eliminada' }}</td>
+                        <td>{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
                         <td style="text-align: center;">{{ $detalle->cantidad_por_doctor }}</td>
                         <td style="text-align: center;">{{ $detalle->cantidad_total }}</td>
                         <td style="text-align: center;">{{ $detalle->cantidad_con_porcentaje }}</td>
@@ -196,7 +196,7 @@
                 $totalesPorEspecialidad = collect($detallesPorRepresentante)
                     ->flatten(1)
                     ->groupBy(function($detalle) {
-                        return $detalle->especialidad->name;
+                        return $detalle->especialidad ? $detalle->especialidad->name : 'Especialidad eliminada';
                     })
                     ->map(function ($grupo) {
                         return $grupo->sum('cantidad_con_porcentaje');

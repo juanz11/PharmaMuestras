@@ -112,8 +112,8 @@
             <tbody>
                 @foreach($representative->getProductsForCycle($ciclo) as $item)
                     <tr>
-                        <td>{{ $item->producto->medicalSpecialty->name }}</td>
-                        <td>{{ $item->producto->name }}</td>
+                        <td>{{ $item->producto && $item->producto->medicalSpecialty ? $item->producto->medicalSpecialty->name : 'Especialidad eliminada' }}</td>
+                        <td>{{ $item->producto ? $item->producto->name : 'Producto eliminado' }}</td>
                         <td>{{ $item->cantidad_total }}</td>
                         <td>{{ $item->cantidad_con_porcentaje > 0 ? 'Hospitalario' : 'No Hospitalario' }}</td>
                     </tr>
