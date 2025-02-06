@@ -148,44 +148,8 @@
         </table>
     </div>
 
-    <!-- Detalles por Representante -->
-    <div class="section-title">Detalles por Representante</div>
-    @foreach($detallesPorRepresentante as $representanteId => $detalles)
-        <div class="representante-section">
-            <div class="info-box">
-                <h4 style="margin: 0;">{{ $detalles->first()->representante->name }}</h4>
-                <p style="margin: 5px 0 0 0;">Total de doctores asignados: {{ $detalles->first()->representante->doctors->sum('doctors_count') }}</p>
-            </div>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Especialidad</th>
-                        <th>Producto</th>
-                        <th style="text-align: center;">Doctores en Especialidad</th>
-                        <th style="text-align: center;">Cantidad por Doctor</th>
-                        <th style="text-align: center;">Cantidad Total</th>
-                        <th style="text-align: center;">Con % Hospitalario</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($detalles as $detalle)
-                    <tr>
-                        <td>{{ $detalle->especialidad ? $detalle->especialidad->name : 'Especialidad eliminada' }}</td>
-                        <td>{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
-                        <td style="text-align: center;">{{ $detalle->representante->doctors->where('medical_specialty_id', $detalle->especialidad_id)->sum('doctors_count') }}</td>
-                        <td style="text-align: center;">{{ $detalle->cantidad_por_doctor }}</td>
-                        <td style="text-align: center;">{{ $detalle->cantidad_total }}</td>
-                        <td style="text-align: center;">{{ $detalle->cantidad_con_porcentaje }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @endforeach
-
     <!-- Resumen Total por Especialidad -->
-    <div class="section-title">Resumen Total por Especialidad</div>
+    <div class="section-title" style="margin-top: 10px;">Resumen Total por Especialidad</div>
     <table>
         <thead>
             <tr>
@@ -208,16 +172,87 @@
             @foreach($totalesPorEspecialidad as $especialidad => $total)
             <tr>
                 <td>{{ $especialidad }}</td>
-                <td style="text-align: center;">{{ $total }}</td>
+                <td style="text-align: center;">{{ $total }} Unidades</td>
             </tr>
             @endforeach
             
             <tr class="total-row">
                 <td>Total General</td>
-                <td style="text-align: center;">{{ $totalesPorEspecialidad->sum() }}</td>
+                <td style="text-align: center;">{{ $totalesPorEspecialidad->sum() }} Unidades</td>
             </tr>
         </tbody>
     </table>
+
+    <!-- Medicamentos Entregados -->
+    <div class="section-title" style="margin-top: 20px;">Medicamentos Entregados</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Medicamento</th>
+                <th style="text-align: center;">Total Entregados</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $totalesPorMedicamento = collect($detallesPorRepresentante)
+                    ->flatten(1)
+                    ->groupBy(function($detalle) {
+                        return $detalle->producto ? $detalle->producto->name : 'Producto eliminado';
+                    })
+                    ->map(function ($grupo) {
+                        return $grupo->sum('cantidad_con_porcentaje');
+                    });
+            @endphp
+            
+            @foreach($totalesPorMedicamento as $medicamento => $total)
+            <tr>
+                <td>{{ $medicamento }}</td>
+                <td style="text-align: center;">{{ $total }} Unidades</td>
+            </tr>
+            @endforeach
+            
+            <tr class="total-row">
+                <td>Total General</td>
+                <td style="text-align: center;">{{ $totalesPorMedicamento->sum() }} Unidades</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Detalles por Representante -->
+    <div class="section-title" style="margin-top: 20px;">Detalles por Representante</div>
+    @foreach($detallesPorRepresentante as $representanteId => $detalles)
+        <div class="representante-section">
+            <div class="info-box">
+                <h4 style="margin: 0;">{{ $detalles->first()->representante->name }}</h4>
+                <p style="margin: 5px 0 0 0;">Total de doctores asignados: {{ $detalles->first()->representante->doctors->sum('doctors_count') }}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Especialidad</th>
+                        <th>Producto</th>
+                        <th style="text-align: center;">Doctores en Especialidad</th>
+                        <th style="text-align: center;">Cantidad por Doctor</th>
+                        <th style="text-align: center;">Total Entregados</th>
+                        <th style="text-align: center;">Con % Hospitalario</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($detalles as $detalle)
+                    <tr>
+                        <td>{{ $detalle->especialidad ? $detalle->especialidad->name : 'Especialidad eliminada' }}</td>
+                        <td>{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
+                        <td style="text-align: center;">{{ $detalle->representante->doctors->where('medical_specialty_id', $detalle->especialidad_id)->sum('doctors_count') }}</td>
+                        <td style="text-align: center;">{{ $detalle->cantidad_por_doctor }}</td>
+                        <td style="text-align: center;">{{ $detalle->cantidad_total }} Unidades</td>
+                        <td style="text-align: center;">{{ $detalle->cantidad_con_porcentaje }} Unidades</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endforeach
 
     <div class="footer">
         {{ now()->year }} Sistema de Gestión de Muestras Médicas - Página 1
