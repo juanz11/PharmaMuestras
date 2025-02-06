@@ -114,8 +114,8 @@
                     <tr>
                         <td>{{ $item->producto && $item->producto->medicalSpecialty ? $item->producto->medicalSpecialty->name : 'Especialidad eliminada' }}</td>
                         <td>{{ $item->producto ? $item->producto->name : 'Producto eliminado' }}</td>
-                        <td style="text-align: center;">{{ $item->cantidad_total }}</td>
-                        <td style="text-align: center;">{{ $item->cantidad_con_porcentaje }}</td>
+                        <td style="text-align: center;">{{ $item->cantidad_total }} Unidades</td>
+                        <td style="text-align: center;">{{ $item->cantidad_con_porcentaje }} Unidades</td>
                     </tr>
                 @endforeach
             </tbody>
