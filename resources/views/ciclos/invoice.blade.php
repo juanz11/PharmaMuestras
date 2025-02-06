@@ -105,8 +105,8 @@
                 <tr>
                     <th>Especialidad</th>
                     <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Tipo</th>
+                    <th style="text-align: center;">Total Entregados</th>
+                    <th style="text-align: center;">Con % Hospitalario</th>
                 </tr>
             </thead>
             <tbody>
@@ -114,8 +114,8 @@
                     <tr>
                         <td>{{ $item->producto && $item->producto->medicalSpecialty ? $item->producto->medicalSpecialty->name : 'Especialidad eliminada' }}</td>
                         <td>{{ $item->producto ? $item->producto->name : 'Producto eliminado' }}</td>
-                        <td>{{ $item->cantidad_total }}</td>
-                        <td>{{ $item->cantidad_con_porcentaje > 0 ? 'Hospitalario' : 'No Hospitalario' }}</td>
+                        <td style="text-align: center;">{{ $item->cantidad_total }}</td>
+                        <td style="text-align: center;">{{ $item->cantidad_con_porcentaje }}</td>
                     </tr>
                 @endforeach
             </tbody>
