@@ -14,7 +14,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="w-[95%] mx-auto px-4">
             @if (session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded shadow-sm" role="alert">
                     <div class="flex">
@@ -30,9 +30,9 @@
                 </div>
             @endif
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12 px-4">
                 @foreach ($products as $product)
-                    <div style="width: 320px; height: 480px;" class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
+                    <div style="width: 320px; height: 480px; margin: 0 auto;" class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
                         <div style="width: 320px; height: 220px; overflow: hidden;">
                             @if($product->image_path)
                                 <img src="/storage/{{ $product->image_path }}" 
