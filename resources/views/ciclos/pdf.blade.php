@@ -162,6 +162,7 @@
                     <tr>
                         <th>Especialidad</th>
                         <th>Producto</th>
+                        <th style="text-align: center;">Doctores en Especialidad</th>
                         <th style="text-align: center;">Cantidad por Doctor</th>
                         <th style="text-align: center;">Cantidad Total</th>
                         <th style="text-align: center;">Con % Hospitalario</th>
@@ -172,6 +173,7 @@
                     <tr>
                         <td>{{ $detalle->especialidad ? $detalle->especialidad->name : 'Especialidad eliminada' }}</td>
                         <td>{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
+                        <td style="text-align: center;">{{ $detalle->representante->doctors->where('medical_specialty_id', $detalle->especialidad_id)->sum('doctors_count') }}</td>
                         <td style="text-align: center;">{{ $detalle->cantidad_por_doctor }}</td>
                         <td style="text-align: center;">{{ $detalle->cantidad_total }}</td>
                         <td style="text-align: center;">{{ $detalle->cantidad_con_porcentaje }}</td>

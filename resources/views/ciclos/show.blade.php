@@ -102,6 +102,7 @@
                                             <tr>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Especialidad</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctores en Especialidad</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad por Doctor</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad Total</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Con % Hospitalario</th>
@@ -112,6 +113,7 @@
                                             <tr>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->especialidad ? $detalle->especialidad->name : 'Especialidad eliminada' }}</td>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->representante->doctors->where('medical_specialty_id', $detalle->especialidad_id)->sum('doctors_count') }}</td>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_por_doctor }}</td>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_total }}</td>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_con_porcentaje }}</td>
