@@ -15,12 +15,16 @@
                 </form>
                 @endif
                 @if($ciclo->status !== 'pendiente')
+                <div>
                     <a href="{{ route('ciclos.pdf', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded" style="background-color: #dc3545 !important;">
                         Descargar PDF
-                    </a>
+                    </a></div>
+                    <div style="
+    padding-left: 10px;
+">
                     <a href="{{ route('ciclos.invoice', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded" style="background-color: #198754 !important;">
                         Facturas por Representante
-                    </a>
+                    </a></div>
                 @endif
             </div>
         </div>
