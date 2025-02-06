@@ -14,12 +14,14 @@
                     </button>
                 </form>
                 @endif
-                <a href="{{ route('ciclos.pdf', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded" style="background-color: #dc3545 !important;">
-                    Descargar PDF
-                </a>
-                <a href="{{ route('ciclos.invoice', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded" style="background-color: #198754 !important;">
-                    Facturas por Representante
-                </a>
+                @if($ciclo->status !== 'pendiente')
+                    <a href="{{ route('ciclos.pdf', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded" style="background-color: #dc3545 !important;">
+                        Descargar PDF
+                    </a>
+                    <a href="{{ route('ciclos.invoice', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded" style="background-color: #198754 !important;">
+                        Facturas por Representante
+                    </a>
+                @endif
             </div>
         </div>
     </x-slot>
