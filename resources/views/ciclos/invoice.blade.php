@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Factura de Entrega - {{ $ciclo->fecha_inicio }}</title>
+    <title>Nota de Entrega - {{ $ciclo->fecha_inicio }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;

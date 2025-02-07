@@ -129,7 +129,7 @@ class CicloController extends Controller
         $pdf = Pdf::loadView('ciclos.invoice', compact('ciclo'));
         $pdf->setPaper('a4');
         
-        return $pdf->download('facturas_ciclo_' . $ciclo->id . '.pdf');
+        return $pdf->download('notas_ciclo_' . $ciclo->id . '.pdf');
     }
 
     public function deliver(Ciclo $ciclo)
