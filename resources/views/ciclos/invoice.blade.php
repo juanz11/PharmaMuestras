@@ -92,9 +92,9 @@
                     <td>{{ $ciclo->fecha_inicio }}</td>
                 </tr>
                 <tr>
-                    <td><strong>Estado:</strong></td>
+                    <td><strong>Status:</strong></td>
                     <td>{{ ucfirst($ciclo->status) }}</td>
-                    <td><strong>% Hospitalario:</strong></td>
+                    <td><strong>Hospitalario:</strong></td>
                     <td>{{ $ciclo->porcentaje_hospitalario }}%</td>
                 </tr>
             </table>
@@ -106,7 +106,7 @@
                     <th>Especialidad</th>
                     <th>Producto</th>
                     <th style="text-align: center;">Total Entregados</th>
-                    <th style="text-align: center;">Con % Hospitalario</th>
+                    <th style="text-align: center;">Hospitalario</th>
                 </tr>
             </thead>
             <tbody>

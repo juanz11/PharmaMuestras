@@ -63,7 +63,7 @@
                             <p class="font-medium">{{ $ciclo->fecha_inicio->format('d/m/Y') }}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600">Estado</p>
+                            <p class="text-sm text-gray-600">Status</p>
                             <p class="font-medium">
                                 @if($ciclo->status === 'pendiente')
                                     <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">Pendiente</span>
@@ -105,7 +105,7 @@
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctores en Especialidad</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad por Doctor</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad Total</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Con % Hospitalario</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospitalario</th>
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">

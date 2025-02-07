@@ -122,7 +122,7 @@
                 <td>{{ $ciclo->fecha_inicio->format('d/m/Y') }}</td>
             </tr>
             <tr>
-                <th>Estado</th>
+                <th>Status</th>
                 <td>
                     <span style="
                         background-color: {{ $ciclo->status === 'entregado' ? '#27ae60' : '#f1c40f' }};
@@ -235,7 +235,7 @@
                         <th style="text-align: center;">Doctores en Especialidad</th>
                         <th style="text-align: center;">Cantidad por Doctor</th>
                         <th style="text-align: center;">Total Entregados</th>
-                        <th style="text-align: center;">Con % Hospitalario</th>
+                        <th style="text-align: center;">Hospitalario</th>
                     </tr>
                 </thead>
                 <tbody>
