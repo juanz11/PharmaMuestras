@@ -174,7 +174,8 @@
                             @endphp
                             <thead>
                                 <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Representante</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Representante</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zona</th>
                                     @foreach($especialidades as $especialidad)
                                         @php
                                             $numProductos = $productosPorEspecialidad->get($especialidad->id, collect())->count();
@@ -185,6 +186,7 @@
                                     @endforeach
                                 </tr>
                                 <tr>
+                                    <th class="px-4 py-2"></th>
                                     <th class="px-4 py-2"></th>
                                     @foreach($especialidades as $especialidad)
                                         @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
@@ -204,6 +206,9 @@
                                         <td class="px-4 py-2 whitespace-nowrap">
                                             {{ $detalles->first()->representante->name }}
                                         </td>
+                                        <td class="px-4 py-2 whitespace-nowrap">
+                                            {{ $detalles->first()->representante->zone ?? 'Sin zona' }}
+                                        </td>
                                         @foreach($especialidades as $especialidad)
                                             @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
                                                 @php
@@ -221,6 +226,7 @@
                                 <!-- Fila de totales -->
                                 <tr class="bg-gray-50 font-semibold">
                                     <td class="px-4 py-2 whitespace-nowrap">Total</td>
+                                    <td class="px-4 py-2 whitespace-nowrap"></td>
                                     @foreach($especialidades as $especialidad)
                                         @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
                                             @php
