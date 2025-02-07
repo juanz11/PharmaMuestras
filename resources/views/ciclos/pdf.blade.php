@@ -110,7 +110,8 @@
 <body>
     <div class="header">
         <h1>Reporte de Ciclo de Distribución</h1>
-        <p style="margin: 5px 0 0 0; color: #666;">Generado el {{ now()->format('d/m/Y H:i') }}</p>
+        <p style="margin: 5px 0 0 0; color: #666;">Generado el {{ now()->format('d/m/Y') }}</p>
+        <h2 style="margin: 15px 0; font-size: 24px; text-align: center;">CICLO {{ $ciclo->id }}</h2>
     </div>
 
     <!-- Información General -->
