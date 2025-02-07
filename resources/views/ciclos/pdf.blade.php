@@ -173,13 +173,13 @@
             @foreach($totalesPorEspecialidad as $especialidad => $total)
             <tr>
                 <td>{{ $especialidad }}</td>
-                <td style="text-align: center;">{{ $total }} Unidades</td>
+                <td style="text-align: center;">{{ $total }} </td>
             </tr>
             @endforeach
             
             <tr class="total-row">
                 <td>Total General</td>
-                <td style="text-align: center;">{{ $totalesPorEspecialidad->sum() }} Unidades</td>
+                <td style="text-align: center;">{{ $totalesPorEspecialidad->sum() }} </td>
             </tr>
         </tbody>
     </table>
@@ -208,13 +208,13 @@
             @foreach($totalesPorMedicamento as $medicamento => $total)
             <tr>
                 <td>{{ $medicamento }}</td>
-                <td style="text-align: center;">{{ $total }} Unidades</td>
+                <td style="text-align: center;">{{ $total }}  </td>
             </tr>
             @endforeach
             
             <tr class="total-row">
                 <td>Total General</td>
-                <td style="text-align: center;">{{ $totalesPorMedicamento->sum() }} Unidades</td>
+                <td style="text-align: center;">{{ $totalesPorMedicamento->sum() }} </td>
             </tr>
         </tbody>
     </table>
@@ -246,8 +246,8 @@
                         <td>{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
                         <td style="text-align: center;">{{ $detalle->representante->doctors->where('medical_specialty_id', $detalle->especialidad_id)->sum('doctors_count') }}</td>
                         <td style="text-align: center;">{{ $detalle->cantidad_por_doctor }}</td>
-                        <td style="text-align: center;">{{ $detalle->cantidad_total }} Unidades</td>
-                        <td style="text-align: center;">{{ $detalle->cantidad_con_porcentaje }} Unidades</td>
+                        <td style="text-align: center;">{{ $detalle->cantidad_total }} </td>
+                        <td style="text-align: center;">{{ $detalle->cantidad_con_porcentaje }} </td>
                     </tr>
                     @endforeach
                 </tbody>

@@ -96,30 +96,59 @@
                                     Total de doctores: {{ $detalles->first()->representante->doctors->sum('doctors_count') }}
                                 </p>
                                 
+                                @php
+                                    $productos = $detalles->groupBy('producto_id');
+                                    $especialidades = \App\Models\MedicalSpecialty::whereIn('id', $detalles->pluck('especialidad_id')->unique())->get();
+                                @endphp
+
                                 <div class="overflow-x-auto">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead>
                                             <tr>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Especialidad</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctores en Especialidad</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad por Doctor</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                                                @foreach($especialidades as $especialidad)
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        {{ $especialidad->name }}
+                                                        <div class="text-xxs text-gray-400 normal-case">
+                                                            ({{ $detalles->first()->representante->doctors->where('medical_specialty_id', $especialidad->id)->sum('doctors_count') }} doctores)
+                                                        </div>
+                                                    </th>
+                                                @endforeach
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospitalario</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><strong>TOTAL</strong></th>
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
-                                            @foreach($detalles as $detalle)
-                                            <tr>
-                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->especialidad ? $detalle->especialidad->name : 'Especialidad eliminada' }}</td>
-                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
-                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->representante->doctors->where('medical_specialty_id', $detalle->especialidad_id)->sum('doctors_count') }}</td>
-                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_por_doctor }}</td>
-                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_total }}</td>
-                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_con_porcentaje * ($ciclo->porcentaje_hospitalario / 100) }}</td>
-                                                <td class="px-4 py-2 whitespace-nowrap"><strong>{{ $detalle->cantidad_con_porcentaje }}</strong></td>
-                                            </tr>
+                                            @foreach($productos as $productoId => $productoDetalles)
+                                                @php
+                                                    $producto = \App\Models\Product::find($productoId);
+                                                    $totalProducto = 0;
+                                                @endphp
+                                                <tr>
+                                                    <td class="px-4 py-2 whitespace-nowrap">{{ $producto ? $producto->name : 'Producto eliminado' }}</td>
+                                                    @foreach($especialidades as $especialidad)
+                                                        @php
+                                                            $detalle = $productoDetalles->where('especialidad_id', $especialidad->id)->first();
+                                                            if ($detalle) {
+                                                                $totalProducto += $detalle->cantidad_con_porcentaje;
+                                                            }
+                                                        @endphp
+                                                        <td class="px-4 py-2 whitespace-nowrap">
+                                                            @if($detalle)
+                                                                {{ $detalle->cantidad_con_porcentaje }}
+                                                                <div class="text-xs text-gray-500">
+                                                                    ({{ $detalle->cantidad_por_doctor }} x doctor)
+                                                                </div>
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </td>
+                                                    @endforeach
+                                                    <td class="px-4 py-2 whitespace-nowrap">
+                                                        {{ $totalProducto * ($ciclo->porcentaje_hospitalario / 100) }}
+                                                    </td>
+                                                    <td class="px-4 py-2 whitespace-nowrap"><strong>{{ $totalProducto }}</strong></td>
+                                                </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
@@ -134,35 +163,78 @@
                     <h3 class="text-lg font-semibold mb-4">Resumen Total por Especialidad</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
+                            @php
+                                $especialidades = \App\Models\MedicalSpecialty::whereIn('id', collect($detallesPorRepresentante)->flatten(1)->pluck('especialidad_id')->unique())->get();
+                                $productosPorEspecialidad = collect($detallesPorRepresentante)
+                                    ->flatten(1)
+                                    ->groupBy('especialidad_id')
+                                    ->map(function($grupo) {
+                                        return $grupo->pluck('producto_id')->unique();
+                                    });
+                            @endphp
                             <thead>
                                 <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Especialidad</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Productos Entregados</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Representante</th>
+                                    @foreach($especialidades as $especialidad)
+                                        @php
+                                            $numProductos = $productosPorEspecialidad->get($especialidad->id, collect())->count();
+                                        @endphp
+                                        <th colspan="{{ $numProductos }}" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l">
+                                            {{ $especialidad->name }}
+                                        </th>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="px-4 py-2"></th>
+                                    @foreach($especialidades as $especialidad)
+                                        @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
+                                            @php
+                                                $producto = \App\Models\Product::find($productoId);
+                                            @endphp
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-l">
+                                                {{ $producto ? $producto->name : 'Producto eliminado' }}
+                                            </th>
+                                        @endforeach
+                                    @endforeach
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @php
-                                    $resumenPorEspecialidad = collect($detallesPorRepresentante)
-                                        ->flatten(1)
-                                        ->groupBy('especialidad_id')
-                                        ->map(function ($grupo) {
-                                            return $grupo->sum('cantidad_con_porcentaje');
-                                        });
-                                @endphp
-                                
-                                @foreach($resumenPorEspecialidad as $especialidadId => $total)
-                                    @php
-                                        $especialidad = \App\Models\MedicalSpecialty::find($especialidadId);
-                                    @endphp
+                                @foreach($detallesPorRepresentante as $representanteId => $detalles)
                                     <tr>
-                                        <td class="px-4 py-2 whitespace-nowrap">{{ $especialidad ? $especialidad->name : 'Especialidad eliminada' }}</td>
-                                        <td class="px-4 py-2 whitespace-nowrap">{{ $total }}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap">
+                                            {{ $detalles->first()->representante->name }}
+                                        </td>
+                                        @foreach($especialidades as $especialidad)
+                                            @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
+                                                @php
+                                                    $detalle = $detalles->first(function($d) use ($especialidad, $productoId) {
+                                                        return $d->especialidad_id == $especialidad->id && $d->producto_id == $productoId;
+                                                    });
+                                                @endphp
+                                                <td class="px-4 py-2 whitespace-nowrap text-center border-l">
+                                                    {{ $detalle ? $detalle->cantidad_con_porcentaje : '-' }}
+                                                </td>
+                                            @endforeach
+                                        @endforeach
                                     </tr>
                                 @endforeach
-                                
+                                <!-- Fila de totales -->
                                 <tr class="bg-gray-50 font-semibold">
-                                    <td class="px-4 py-2 whitespace-nowrap">Total General</td>
-                                    <td class="px-4 py-2 whitespace-nowrap">{{ $resumenPorEspecialidad->sum() }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">Total</td>
+                                    @foreach($especialidades as $especialidad)
+                                        @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
+                                            @php
+                                                $total = collect($detallesPorRepresentante)
+                                                    ->flatten(1)
+                                                    ->where('especialidad_id', $especialidad->id)
+                                                    ->where('producto_id', $productoId)
+                                                    ->sum('cantidad_con_porcentaje');
+                                            @endphp
+                                            <td class="px-4 py-2 whitespace-nowrap text-center border-l">
+                                                {{ $total ?: '-' }}
+                                            </td>
+                                        @endforeach
+                                    @endforeach
                                 </tr>
                             </tbody>
                         </table>
