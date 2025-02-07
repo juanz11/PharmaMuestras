@@ -68,7 +68,7 @@
     <div class="invoice-page">
         <div class="header">
             <img src="{{ public_path('images/logo/logo.png') }}" alt="Logo" class="logo" style="width: 150px; height: auto;">
-            <h2>Nota de Entrega de Muestras</h2>
+            <h2>Nota de Entrega de Muestras Medicas</h2>
         </div>
 
         <div class="representative-info">
@@ -98,7 +98,7 @@
                     <td></td>
                     <td></td>
                     <td><strong>Fecha de Entrega:</strong></td>
-                    <td>{{ $ciclo->delivered_at ? $ciclo->fecha_fin->format('Y-m-d') : '-' }}</td>
+                    <td>{{ $ciclo->fecha_fin ? $ciclo->fecha_fin->format('Y-m-d') : '-' }}</td>
                 </tr>
                 <tr>
                     <td><strong>Status:</strong></td>
