@@ -36,12 +36,6 @@
                             <x-input-error :messages="$errors->get('valor')" class="mt-2" />
                         </div>
 
-                        <div>
-                            <x-input-label for="category" :value="__('Categoría')" />
-                            <x-text-input id="category" name="category" type="text" class="mt-1 block w-full" :value="old('category')" required />
-                            <x-input-error class="mt-2" :messages="$errors->get('category')" />
-                        </div>
-
                         <div class="mb-4">
                             <label for="medical_specialty_id" class="block text-sm font-medium text-gray-700">Especialidad Médica</label>
                             @if($specialties->count() > 0)
@@ -66,8 +60,8 @@
                         </div>
 
                         <div>
-                            <x-input-label for="image" :value="__('Imagen del Producto')" />
-                            <input id="image" name="image" type="file" class="mt-1 block w-full" required accept="image/*" />
+                            <x-input-label for="image" :value="__('Imagen del Producto (Opcional)')" />
+                            <input id="image" name="image" type="file" class="mt-1 block w-full" accept="image/*" />
                             <x-input-error class="mt-2" :messages="$errors->get('image')" />
                         </div>
 

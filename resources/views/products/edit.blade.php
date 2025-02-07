@@ -37,12 +37,6 @@
                             <x-input-error :messages="$errors->get('valor')" class="mt-2" />
                         </div>
 
-                        <div>
-                            <x-input-label for="category" :value="__('Categoría')" />
-                            <x-text-input id="category" name="category" type="text" class="mt-1 block w-full" :value="old('category', $product->category)" required />
-                            <x-input-error class="mt-2" :messages="$errors->get('category')" />
-                        </div>
-
                         <div class="mt-4">
                             <x-input-label for="medical_specialty_id" :value="__('Especialidad Médica')" />
                             <select id="medical_specialty_id" 
@@ -60,12 +54,15 @@
                         </div>
 
                         <div>
-                            <x-input-label for="image" :value="__('Imagen del Producto')" />
-                            <div class="mt-2">
-                                <img src="{{ Storage::url($product->image_path) }}" alt="{{ $product->name }}" class="w-32 h-32 object-cover rounded">
-                            </div>
+                            <x-input-label for="image" :value="__('Imagen del Producto (Opcional)')" />
+                            @if($product->image)
+                                <div class="mt-2">
+                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-32 h-32 object-cover">
+                                    <p class="text-sm text-gray-600 mt-1">Imagen actual</p>
+                                </div>
+                            @endif
                             <input id="image" name="image" type="file" class="mt-1 block w-full" accept="image/*" />
-                            <p class="mt-1 text-sm text-gray-500">Deja este campo vacío si no deseas cambiar la imagen</p>
+                            <p class="text-sm text-gray-600 mt-1">Deja este campo vacío si no deseas cambiar la imagen</p>
                             <x-input-error class="mt-2" :messages="$errors->get('image')" />
                         </div>
 
