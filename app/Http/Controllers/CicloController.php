@@ -42,10 +42,12 @@ class CicloController extends Controller
                 'representantes' => 'required|array|min:1',
                 'porcentaje_hospitalario' => 'required|numeric|min:0|max:100',
                 'detalles' => 'required|array|min:1',
+                'fecha_fin' => 'required|date|after:today',
             ]);
 
             $ciclo = Ciclo::create([
                 'fecha_inicio' => now(),
+                'fecha_fin' => $request->fecha_fin,
                 'porcentaje_hospitalario' => $request->porcentaje_hospitalario
             ]);
 

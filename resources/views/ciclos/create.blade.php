@@ -17,6 +17,13 @@
                                 Seleccionar Todos
                             </button>
                         </div>
+                        
+                        <!-- Agregar campo de fecha de cierre -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Fecha de Cierre</label>
+                            <input type="date" id="fecha_fin" name="fecha_fin" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                        </div>
+
                         <div class="grid grid-cols-3 gap-4" id="representantes-lista">
                             @if($representantes->isEmpty())
                                 <div class="col-span-3 text-center py-4 text-gray-500">
@@ -134,6 +141,12 @@
                     return;
                 }
 
+                const fechaFin = document.getElementById('fecha_fin').value;
+                if (!fechaFin) {
+                    alert('Por favor, ingrese una fecha de cierre.');
+                    return;
+                }
+
                 paso1.style.display = 'none';
                 paso2.style.display = 'block';
                 btnAnterior.style.display = 'block';
@@ -157,6 +170,7 @@
                     const formData = {
                         representantes: [],
                         porcentaje_hospitalario: document.getElementById('porcentaje_hospitalario').value,
+                        fecha_fin: document.getElementById('fecha_fin').value,
                         detalles: []
                     };
 

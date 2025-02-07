@@ -17,8 +17,10 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre del Ciclo</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Inicio</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Entrega</th>
+
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospitalario</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -27,8 +29,10 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach ($ciclos as $ciclo)
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ $ciclo->id }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ $ciclo->fecha_inicio }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Ciclo {{ $ciclo->id }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ $ciclo->fecha_inicio->format('Y-m-d') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ $ciclo->fecha_fin ? $ciclo->fecha_fin->format('Y-m-d') : 'No establecida' }}</td>
+
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                                             {{ $ciclo->status === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800' }}">
