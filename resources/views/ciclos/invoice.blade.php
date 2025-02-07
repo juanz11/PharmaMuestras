@@ -67,8 +67,8 @@
     @foreach($ciclo->getRepresentativesWithProducts() as $representative)
     <div class="invoice-page">
         <div class="header">
-            <img src="{{ public_path('images/logo/logo.png') }}" alt="Logo" class="logo">
-            <h2>Factura de Entrega de Muestras</h2>
+            <img src="{{ public_path('images/logo/logo.png') }}" alt="Logo" class="logo" style="width: 150px; height: auto;">
+            <h2>Nota de Entrega de Muestras</h2>
         </div>
 
         <div class="representative-info">
@@ -79,6 +79,9 @@
                     <td>{{ $representative->name }}</td>
                     <td><strong>Zona:</strong></td>
                     <td>{{ $representative->zone }}</td>
+                    <td><strong>Ciclo:</strong></td>
+                    <td>Ciclo {{ $ciclo->id }}</td>
+                
                 </tr>
             </table>
         </div>
@@ -86,10 +89,16 @@
         <div class="invoice-info">
             <table>
                 <tr>
-                    <td><strong>Ciclo ID:</strong></td>
-                    <td>#{{ $ciclo->id }}</td>
-                    <td><strong>Fecha:</strong></td>
-                    <td>{{ $ciclo->fecha_inicio }}</td>
+                    <td><strong>Ciclo:</strong></td>
+                    <td>Ciclo {{ $ciclo->id }}</td>
+                    <td><strong>Fecha de Inicio:</strong></td>
+                    <td>{{ $ciclo->fecha_inicio->format('Y-m-d')  }}</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td><strong>Fecha de Entrega:</strong></td>
+                    <td>{{ $ciclo->delivered_at ? $ciclo->fecha_fin->format('Y-m-d') : '-' }}</td>
                 </tr>
                 <tr>
                     <td><strong>Status:</strong></td>
@@ -101,6 +110,14 @@
         </div>
 
         <table class="products-table">
+            @php
+                $detalles = $representative->getProductsForCycle($ciclo);
+                $especialidades = $detalles->groupBy(function($item) {
+                    return $item->producto && $item->producto->medicalSpecialty 
+                        ? $item->producto->medicalSpecialty->id 
+                        : 'sin_especialidad';
+                });
+            @endphp
             <thead>
                 <tr>
                     <th>Especialidad</th>
@@ -114,8 +131,8 @@
                     <tr>
                         <td>{{ $item->producto && $item->producto->medicalSpecialty ? $item->producto->medicalSpecialty->name : 'Especialidad eliminada' }}</td>
                         <td>{{ $item->producto ? $item->producto->name : 'Producto eliminado' }}</td>
-                        <td style="text-align: center;">{{ $item->cantidad_total }} Unidades</td>
-                        <td style="text-align: center;">{{ $item->cantidad_con_porcentaje }} Unidades</td>
+                        <td style="text-align: center;">{{ $item->cantidad_total }}  </td>
+                        <td style="text-align: center;">{{ $item->cantidad_con_porcentaje }}  </td>
                     </tr>
                 @endforeach
             </tbody>
