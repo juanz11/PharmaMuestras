@@ -168,6 +168,46 @@
                         </table>
                     </div>
                 </div>
+
+                    <!-- Resumen Total por Productos -->
+                    <div class="mt-8">
+                    <h3 class="text-lg font-semibold mb-4">Productos Entregados</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Entregados</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @php
+                                    $resumenPorProducto = collect($detallesPorRepresentante)
+                                        ->flatten(1)
+                                        ->groupBy('producto_id')
+                                        ->map(function ($grupo) {
+                                            return $grupo->sum('cantidad_con_porcentaje');
+                                        });
+                                @endphp
+                        
+                                @foreach($resumenPorProducto as $productoId => $total)
+                                    @php
+                                        $producto = \App\Models\Product::find($productoId);
+                                    @endphp
+                                    <tr>
+                                        <td class="px-4 py-2 whitespace-nowrap">{{ $producto ? $producto->name : 'Producto eliminado' }}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap">{{ $total }}</td>
+                                    </tr>
+                                @endforeach
+                        
+                                <tr class="bg-gray-50 font-semibold">
+                                    <td class="px-4 py-2 whitespace-nowrap">Total General</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">{{ $resumenPorProducto->sum() }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
