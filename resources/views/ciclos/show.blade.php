@@ -104,8 +104,9 @@
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctores en Especialidad</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad por Doctor</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad Total</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospitalario</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><strong>TOTAL</strong></th>
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
@@ -116,7 +117,8 @@
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->representante->doctors->where('medical_specialty_id', $detalle->especialidad_id)->sum('doctors_count') }}</td>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_por_doctor }}</td>
                                                 <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_total }}</td>
-                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_con_porcentaje }}</td>
+                                                <td class="px-4 py-2 whitespace-nowrap">{{ $detalle->cantidad_con_porcentaje * ($ciclo->porcentaje_hospitalario / 100) }}</td>
+                                                <td class="px-4 py-2 whitespace-nowrap"><strong>{{ $detalle->cantidad_con_porcentaje }}</strong></td>
                                             </tr>
                                             @endforeach
                                         </tbody>
