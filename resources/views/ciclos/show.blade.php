@@ -160,7 +160,7 @@
                 
                 <!-- Resumen Total por Especialidad -->
                 <div class="mt-8">
-                    <h3 class="text-lg font-semibold mb-4">Resumen Total por Especialidad</h3>
+                    <h3 class="text-lg font-semibold mb-4">Resumen Total</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             @php
