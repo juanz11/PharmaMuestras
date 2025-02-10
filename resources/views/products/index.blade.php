@@ -30,10 +30,10 @@
                 </div>
             @endif
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12 px-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
                 @foreach ($products as $product)
-                    <div style="width: 320px; height: 480px; margin: 0 auto;" class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-                        <div class="relative h-[220px] overflow-hidden">
+                    <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+                        <div class="relative h-48 sm:h-56 overflow-hidden">
                             @if($product->image_path && Storage::disk('public')->exists($product->image_path))
                                 <img src="{{ Storage::url($product->image_path) }}" 
                                      alt="{{ $product->name }}" 
@@ -46,50 +46,50 @@
                                 </div>
                             @endif
                             <div class="absolute bottom-0 left-0 right-0 px-4 py-2 bg-gradient-to-t from-black/50 to-transparent">
-                                <h3 class="text-xl font-bold text-white truncate">{{ $product->name }}</h3>
+                                <h3 class="text-lg sm:text-xl font-bold text-white truncate">{{ $product->name }}</h3>
                             </div>
                         </div>
                         <div class="p-4 flex-1 flex flex-col">
                             <div class="flex-1">
                                 <div class="space-y-3">
-                                    <p class="flex items-center text-gray-600">
+                                    <p class="flex items-center text-gray-600 text-sm sm:text-base">
                                         <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
                                         <span class="font-medium">Cantidad:</span> {{ $product->quantity }}
                                     </p>
-                                    <p class="flex items-center text-gray-600">
+                                    <p class="flex items-center text-gray-600 text-sm sm:text-base">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <span class="font-medium">Valor:</span> ${{ number_format($product->valor, 2) }}
                                     </p>
-                                    <p class="flex items-center text-gray-600">
+                                    <p class="flex items-center text-gray-600 text-sm sm:text-base">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                         </svg>
                                         <span class="font-medium">Especialidad:</span> 
-                                        <span class="ml-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                                        <span class="ml-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm">
                                             {{ $product->medicalSpecialty ? $product->medicalSpecialty->name : 'Sin especialidad' }}
                                         </span>
                                     </p>
                                 </div>
                             </div>
-                            <div class="mt-4 flex justify-between gap-2">
+                            <div class="mt-4 flex flex-col sm:flex-row gap-2">
                                 <a href="{{ route('products.edit', $product) }}" 
                                    style="background-color: #0d6efd !important;"
-                                   class="flex-1 text-white py-2 px-3 rounded-lg hover:opacity-90 transition-colors duration-200 shadow-lg hover:shadow-xl flex items-center justify-center"
+                                   class="flex-1 text-white py-2 px-3 rounded-lg hover:opacity-90 transition-colors duration-200 shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
                                    title="Editar">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
                                     <span class="ml-2">Editar</span>
                                 </a>
                                 <button type="button"
                                         onclick="confirmDelete('{{ $product->id }}', '{{ $product->name }}')"
-                                        class="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg hover:opacity-90 transition-colors duration-200 shadow-lg hover:shadow-xl flex items-center justify-center"
+                                        class="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg hover:opacity-90 transition-colors duration-200 shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
                                         title="Eliminar">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                     </svg>
                                     <span class="ml-2">Eliminar</span>
