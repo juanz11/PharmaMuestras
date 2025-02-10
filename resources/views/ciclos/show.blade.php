@@ -110,7 +110,7 @@
                                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                         {{ $especialidad->name }}
                                                         <div class="text-xxs text-gray-400 normal-case">
-                                                            ({{ $detalles->first()->representante->doctors->where('medical_specialty_id', $especialidad->id)->sum('doctors_count') }} doctores)
+                                                            ({{ $detalles->first()->representante->doctors->where('medical_specialty_id', $especialidad->id)->sum('doctors_count') }} )
                                                         </div>
                                                     </th>
                                                 @endforeach
@@ -137,7 +137,7 @@
                                                             @if($detalle)
                                                                 {{ $detalle->cantidad_con_porcentaje }}
                                                                 <div class="text-xs text-gray-500">
-                                                                    ({{ $detalle->cantidad_por_doctor }} x doctor)
+                                                                    ({{ $detalle->cantidad_por_doctor }} unidades)
                                                                 </div>
                                                             @else
                                                                 -
@@ -147,7 +147,7 @@
                                                     <td class="px-4 py-2 whitespace-nowrap">
                                                         {{ $totalProducto * ($ciclo->porcentaje_hospitalario / 100) }}
                                                     </td>
-                                                    <td class="px-4 py-2 whitespace-nowrap"><strong>{{ $totalProducto }}</strong></td>
+                                                    <td class="px-4 py-2 whitespace-nowrap"><strong>{{ $totalProducto + $totalProducto * ($ciclo->porcentaje_hospitalario / 100)     }}</strong></td>
                                                 </tr>
                                             @endforeach
                                         </tbody>

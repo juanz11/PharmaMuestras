@@ -212,13 +212,18 @@
                         return;
                     }
 
+                    // Obtener el token CSRF directamente del formulario
+                    const token = document.querySelector('input[name="_token"]').value;
+                    
                     const response = await fetch('{{ route('ciclos.store') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'X-CSRF-TOKEN': token,
+                            'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json'
                         },
+                        credentials: 'same-origin',
                         body: JSON.stringify(formData)
                     });
 

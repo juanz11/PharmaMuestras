@@ -92,13 +92,13 @@
                     <td><strong>Ciclo:</strong></td>
                     <td>Ciclo {{ $ciclo->id }}</td>
                     <td><strong>Fecha de Inicio:</strong></td>
-                    <td>{{ $ciclo->fecha_inicio->format('Y-m-d')  }}</td>
+                    <td>{{ $ciclo->fecha_inicio->format('d/m/Y') }}</td>
                 </tr>
                 <tr>
                     <td></td>
                     <td></td>
                     <td><strong>Fecha de Entrega:</strong></td>
-                    <td>{{ $ciclo->fecha_fin ? $ciclo->fecha_fin->format('Y-m-d') : '-' }}</td>
+                    <td>{{ $ciclo->fecha_fin ? \Carbon\Carbon::parse($ciclo->fecha_fin)->format('d/m/Y') : '-' }}</td>
                 </tr>
                 <tr>
                     <td><strong>Status:</strong></td>

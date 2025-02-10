@@ -116,7 +116,7 @@
 <body>
     <div class="header">
         <h1>Reporte de Ciclo de Distribución</h1>
-        <p style="margin: 5px 0 0 0; color: #666;">Generado el {{ now()->format('d/m/Y') }}</p>
+        <p style="margin: 5px 0 0 0; color: #666;">Generado el {{ $ciclo->fecha_inicio->format('d/m/Y') }}</p>
         <h2 style="margin: 15px 0; font-size: 24px; text-align: center;">CICLO {{ $ciclo->id }}</h2>
     </div>
 
@@ -148,7 +148,7 @@
         @if($ciclo->delivered_at)
         <tr>
             <th>Fecha de Entrega</th>
-            <td>{{ $ciclo->delivered_at->format('d/m/Y H:i') }}</td>
+            <td>{{ $ciclo->delivered_at->format('d/m/Y') }}</td>
         </tr>
         @endif
     </table>
@@ -210,7 +210,14 @@
                             <td style="text-align: center;">
                                 {{ $totalProducto * ($ciclo->porcentaje_hospitalario / 100) }}
                             </td>
-                            <td style="text-align: center; font-weight: bold;">{{ $totalProducto }}</td>
+                            <td style="text-align: center; font-weight: bold;">
+                                {{ $totalProducto }}
+                                @if($producto && $producto->value > 0)
+                                    <div style="font-size: 9px; color: #666;">
+                                        (${{ number_format($totalProducto * $producto->value, 2) }})
+                                    </div>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -275,6 +282,25 @@
                 </tr>
             @endforeach
             <tr class="total-row">
+                <td>Valor Total</td>
+                @foreach($especialidades as $especialidad)
+                    @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
+                        @php
+                            $producto = \App\Models\Product::find($productoId);
+                            $totalCantidad = collect($detallesPorRepresentante)
+                                ->flatten(1)
+                                ->where('especialidad_id', $especialidad->id)
+                                ->where('producto_id', $productoId)
+                                ->sum('cantidad_con_porcentaje');
+                            $valorTotal = $producto ? $totalCantidad * $producto->value : 0;
+                        @endphp
+                        <td style="text-align: center;">
+                            {{ $valorTotal ? '$' . number_format($valorTotal, 2) : '-' }}
+                        </td>
+                    @endforeach
+                @endforeach
+            </tr>
+            <tr class="total-row">
                 <td>Total</td>
                 @foreach($especialidades as $especialidad)
                     @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
@@ -319,13 +345,33 @@
                 @endphp
                 <tr>
                     <td>{{ $producto ? $producto->name : 'Producto eliminado' }}</td>
-                    <td style="text-align: center;">{{ $total }}</td>
+                    <td style="text-align: center;">
+                        {{ $total }}
+                        @if($producto && $producto->value > 0)
+                            <div style="font-size: 9px; color: #666;">
+                                (${{ number_format($total * $producto->value, 2) }})
+                            </div>
+                        @endif
+                    </td>
                 </tr>
             @endforeach
             
             <tr class="total-row">
                 <td>Total General</td>
-                <td style="text-align: center;">{{ $resumenPorProducto->sum() }}</td>
+                <td style="text-align: center;">
+                    {{ $resumenPorProducto->sum() }}
+                    @php
+                        $valorTotal = $resumenPorProducto->map(function($cantidad, $productoId) {
+                            $producto = \App\Models\Product::find($productoId);
+                            return $producto ? $cantidad * $producto->value : 0;
+                        })->sum();
+                    @endphp
+                    @if($valorTotal > 0)
+                        <div style="font-size: 9px; color: #666;">
+                            (${{ number_format($valorTotal, 2) }})
+                        </div>
+                    @endif
+                </td>
             </tr>
         </tbody>
     </table>
