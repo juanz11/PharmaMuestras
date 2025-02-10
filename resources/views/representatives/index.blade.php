@@ -80,7 +80,7 @@
                                                     @foreach($representative->doctors as $doctor)
                                                         <div class="flex items-center space-x-2">
                                                             <span class="font-medium text-gray-900">{{ $doctor->medicalSpecialty->name }}:</span>
-                                                            <span class="text-gray-600">{{ $doctor->doctors_count }} doctores</span>
+                                                            <span class="text-gray-600">{{ $doctor->doctors_count }}  </span>
                                                         </div>
                                                     @endforeach
                                                 </div>

@@ -59,7 +59,7 @@
                     <h3 class="text-lg font-semibold mb-4">Información General</h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <p class="text-sm text-gray-600">Fecha de Inicio</p>
+                            <p class="text-sm text-gray-600">Fecha</p>
                             <p class="font-medium">{{ $ciclo->fecha_inicio->format('d/m/Y') }}</p>
                         </div>
                         <div>
@@ -76,12 +76,7 @@
                             <p class="text-sm text-gray-600">Porcentaje Hospitalario</p>
                             <p class="font-medium">{{ $ciclo->porcentaje_hospitalario }}%</p>
                         </div>
-                        @if($ciclo->delivered_at)
-                        <div>
-                            <p class="text-sm text-gray-600">Fecha de Entrega</p>
-                            <p class="font-medium">{{ $ciclo->delivered_at->format('d/m/Y H:i') }}</p>
-                        </div>
-                        @endif
+      
                     </div>
                 </div>
 
