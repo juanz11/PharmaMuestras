@@ -135,9 +135,9 @@
                                                         @endphp
                                                         <td class="px-4 py-2 whitespace-nowrap">
                                                             @if($detalle)
-                                                                {{ $detalle->cantidad_con_porcentaje }}
+                                                                {{ round($detalle->cantidad_con_porcentaje) }}
                                                                 <div class="text-xs text-gray-500">
-                                                                    ({{ $detalle->cantidad_por_doctor }} unidades)
+                                                                    ({{ $detalle->cantidad_por_doctor }} und)
                                                                 </div>
                                                             @else
                                                                 -
@@ -145,9 +145,9 @@
                                                         </td>
                                                     @endforeach
                                                     <td class="px-4 py-2 whitespace-nowrap">
-                                                        {{ $totalProducto * ($ciclo->porcentaje_hospitalario / 100) }}
+                                                        {{ round($totalProducto * ($ciclo->porcentaje_hospitalario / 100)) }}
                                                     </td>
-                                                    <td class="px-4 py-2 whitespace-nowrap"><strong>{{ $totalProducto + $totalProducto * ($ciclo->porcentaje_hospitalario / 100)     }}</strong></td>
+                                                    <td class="px-4 py-2 whitespace-nowrap"><strong>{{ round($totalProducto + $totalProducto * ($ciclo->porcentaje_hospitalario / 100)) }}</strong></td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
@@ -217,7 +217,7 @@
                                                     });
                                                 @endphp
                                                 <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                                    {{ $detalle ? $detalle->cantidad_con_porcentaje : '-' }}
+                                                    {{ $detalle ? round($detalle->cantidad_con_porcentaje) : '-' }}
                                                 </td>
                                             @endforeach
                                         @endforeach
@@ -237,7 +237,7 @@
                                                     ->sum('cantidad_con_porcentaje');
                                             @endphp
                                             <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                                {{ $total ?: '-' }}
+                                                {{ $total ? round($total) : '-' }}
                                             </td>
                                         @endforeach
                                     @endforeach
@@ -274,13 +274,13 @@
                                     @endphp
                                     <tr>
                                         <td class="px-4 py-2 whitespace-nowrap">{{ $producto ? $producto->name : 'Producto eliminado' }}</td>
-                                        <td class="px-4 py-2 whitespace-nowrap">{{ $total }}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap">{{ round($total) }}</td>
                                     </tr>
                                 @endforeach
                         
                                 <tr class="bg-gray-50 font-semibold">
                                     <td class="px-4 py-2 whitespace-nowrap">Total General</td>
-                                    <td class="px-4 py-2 whitespace-nowrap">{{ $resumenPorProducto->sum() }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">{{ round($resumenPorProducto->sum()) }}</td>
                                 </tr>
                             </tbody>
                         </table>
