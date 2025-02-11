@@ -42,7 +42,9 @@ class CicloController extends Controller
                 'representantes' => 'required|array|min:1',
                 'porcentaje_hospitalario' => 'required|numeric|min:0|max:100',
                 'detalles' => 'required|array|min:1',
-                'fecha_fin' => 'required|date|after:today',
+                'fecha_fin' => 'required|date|after:fecha_inicio',
+            ], [
+                'fecha_fin.after' => 'La fecha de fin debe ser posterior a la fecha de inicio.',
             ]);
 
             $ciclo = Ciclo::create([
@@ -126,10 +128,14 @@ class CicloController extends Controller
 
     public function generateInvoice(Ciclo $ciclo)
     {
-        $pdf = Pdf::loadView('ciclos.invoice', compact('ciclo'));
-        $pdf->setPaper('a4');
+        $ciclo->load([
+            'detalles.producto.medicalSpecialties',
+            'detalles.representante',
+            'detalles.especialidad'
+        ]);
         
-        return $pdf->download('notas_ciclo_' . $ciclo->id . '.pdf');
+        $pdf = Pdf::loadView('ciclos.invoice', compact('ciclo'));
+        return $pdf->stream('nota_entrega.pdf');
     }
 
     public function deliver(Ciclo $ciclo)

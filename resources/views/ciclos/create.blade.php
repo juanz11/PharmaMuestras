@@ -18,10 +18,24 @@
                             </button>
                         </div>
                         
-                        <!-- Agregar campo de fecha de cierre -->
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700">Fecha de Cierre</label>
-                            <input type="date" id="fecha_fin" name="fecha_fin" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                            <label for="fecha_inicio" class="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+                            <input type="date" name="fecha_inicio" id="fecha_inicio" 
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('fecha_inicio') border-red-500 @enderror"
+                                   value="{{ old('fecha_inicio') }}">
+                            @error('fecha_inicio')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="fecha_fin" class="block text-sm font-medium text-gray-700">Fecha de Fin</label>
+                            <input type="date" name="fecha_fin" id="fecha_fin" 
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('fecha_fin') border-red-500 @enderror"
+                                   value="{{ old('fecha_fin') }}">
+                            @error('fecha_fin')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div class="grid grid-cols-3 gap-4" id="representantes-lista">

@@ -29,7 +29,7 @@ class Representative extends Model
     {
         return DetalleCiclo::where('ciclo_id', $ciclo->id)
             ->where('representante_id', $this->id)
-            ->with(['producto.medicalSpecialty'])
+            ->with(['producto.medicalSpecialties'])
             ->get();
     }
 }

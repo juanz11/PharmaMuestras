@@ -9,7 +9,10 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    <form method="POST" 
+                          action="{{ route('products.store') }}" 
+                          enctype="multipart/form-data" 
+                          class="space-y-6">
                         @csrf
 
                         <div>
@@ -37,26 +40,17 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="medical_specialty_id" class="block text-sm font-medium text-gray-700">Especialidad Médica</label>
-                            @if($specialties->count() > 0)
-                            <select id="medical_specialty_id" 
-                                    name="medical_specialty_id" 
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                <option value="">Seleccionar Especialidad</option>
-                                @foreach($specialties as $specialty)
-                                    <option value="{{ $specialty->id }}" {{ old('medical_specialty_id') == $specialty->id ? 'selected' : '' }}>
-                                        {{ $specialty->name }}
-                                    </option>
+                            <label for="medical_specialties" class="block text-sm font-medium text-gray-700">Especialidades Médicas</label>
+                            <select name="medical_specialties[]" id="medical_specialties" multiple 
+                                    class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                @foreach($medicalSpecialties as $specialty)
+                                    <option value="{{ $specialty->id }}">{{ $specialty->name }}</option>
                                 @endforeach
                             </select>
-                            @else
-                            <div class="mt-1 text-sm text-red-600">
-                                No hay especialidades médicas disponibles. Por favor, <a href="{{ route('medical-specialties.index') }}" class="text-blue-600 hover:text-blue-800">cree una especialidad</a> primero.
-                            </div>
-                            @endif
-                            @error('medical_specialty_id')
+                            @error('medical_specialties')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
+                            <p class="mt-1 text-xs text-gray-500">Mantén presionado Ctrl (Windows) o Command (Mac) para seleccionar múltiples especialidades</p>
                         </div>
 
                         <div>

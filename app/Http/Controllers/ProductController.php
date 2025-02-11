@@ -14,7 +14,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::with('medicalSpecialty')->paginate(12);
+        $products = Product::with('medicalSpecialties')->paginate(12);
         return view('products.index', compact('products'));
     }
 
@@ -24,7 +24,7 @@ class ProductController extends Controller
     public function create()
     {
         $medicalSpecialties = MedicalSpecialty::all();
-        return view('products.create', ['specialties' => $medicalSpecialties]);
+        return view('products.create', compact('medicalSpecialties'));
     }
 
     /**
@@ -34,29 +34,29 @@ class ProductController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'medical_specialty_id' => 'required|exists:medical_specialties,id',
             'quantity' => 'required|integer|min:0',
             'valor' => 'required|numeric|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'medical_specialties' => 'required|array|min:1',
+            'medical_specialties.*' => 'exists:medical_specialties,id'
         ]);
 
-        try {
-            $product = new Product($request->except('image'));
+        $product = new Product($request->only(['name', 'quantity', 'valor']));
 
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('products', 'public');
-                $product->image_path = $imagePath;
-            } else {
-                $product->image_path = 'default.jpg';
-            }
-
-            $product->save();
-
-            return redirect()->route('products.index')
-                ->with('success', 'Producto creado exitosamente.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error al crear el producto: ' . $e->getMessage());
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('products', 'public');
+            $product->image_path = $imagePath;
         }
+
+        $product->save();
+
+        // Sincronizar las especialidades médicas
+        if ($request->has('medical_specialties')) {
+            $product->medicalSpecialties()->sync($request->medical_specialties);
+        }
+
+        return redirect()->route('products.index')
+            ->with('success', 'Producto creado exitosamente.');
     }
 
     /**
@@ -73,20 +73,33 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
-        $validatedData = $this->validateProduct($request);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'quantity' => 'required|integer|min:0',
+            'valor' => 'required|numeric|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'medical_specialties' => 'required|array|min:1',
+            'medical_specialties.*' => 'exists:medical_specialties,id'
+        ]);
 
-        $data = $validatedData;
+        $product->fill($request->only(['name', 'quantity', 'valor']));
 
         if ($request->hasFile('image')) {
-            // Eliminar la imagen anterior
-            if ($product->image_path) {
+            // Eliminar la imagen anterior si existe
+            if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
                 Storage::disk('public')->delete($product->image_path);
             }
             
-            $data['image_path'] = $request->file('image')->store('products', 'public');
+            $imagePath = $request->file('image')->store('products', 'public');
+            $product->image_path = $imagePath;
         }
 
-        $product->update($data);
+        $product->save();
+
+        // Sincronizar las especialidades médicas
+        if ($request->has('medical_specialties')) {
+            $product->medicalSpecialties()->sync($request->medical_specialties);
+        }
 
         return redirect()->route('products.index')
             ->with('success', 'Producto actualizado exitosamente.');

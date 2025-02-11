@@ -46,11 +46,12 @@
                                 </div>
                             @endif
                             <div class="absolute bottom-0 left-0 right-0 px-4 py-2 bg-gradient-to-t from-black/50 to-transparent">
-                                <h3 class="text-lg sm:text-xl font-bold text-white truncate">{{ $product->name }}</h3>
+                                <div class="text-lg sm:text-xl font-bold text-white truncate">Imagen del Producto</div>
                             </div>
                         </div>
                         <div class="p-4 flex-1 flex flex-col">
                             <div class="flex-1">
+                                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">{{ $product->name }}</h2>
                                 <div class="space-y-3">
                                     <p class="flex items-center text-gray-600 text-sm sm:text-base">
                                         <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,10 +69,18 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                         </svg>
-                                        <span class="font-medium">Especialidad:</span> 
-                                        <span class="ml-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm">
-                                            {{ $product->medicalSpecialty ? $product->medicalSpecialty->name : 'Sin especialidad' }}
-                                        </span>
+                                        <span class="font-medium">Especialidades:</span> 
+                                        <div class="ml-1 flex flex-wrap gap-1">
+                                            @forelse($product->medicalSpecialties as $specialty)
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm">
+                                                    {{ $specialty->name }}
+                                                </span>
+                                            @empty
+                                                <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs sm:text-sm">
+                                                    Sin especialidad
+                                                </span>
+                                            @endforelse
+                                        </div>
                                     </p>
                                 </div>
                             </div>

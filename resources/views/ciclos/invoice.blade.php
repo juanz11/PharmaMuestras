@@ -81,7 +81,6 @@
                     <td>{{ $representative->zone }}</td>
                     <td><strong>Ciclo:</strong></td>
                     <td>Ciclo {{ $ciclo->id }}</td>
-                
                 </tr>
             </table>
         </div>
@@ -110,14 +109,6 @@
         </div>
 
         <table class="products-table">
-            @php
-                $detalles = $representative->getProductsForCycle($ciclo);
-                $especialidades = $detalles->groupBy(function($item) {
-                    return $item->producto && $item->producto->medicalSpecialty 
-                        ? $item->producto->medicalSpecialty->id 
-                        : 'sin_especialidad';
-                });
-            @endphp
             <thead>
                 <tr>
                     <th>Especialidad</th>
@@ -127,9 +118,9 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($representative->getProductsForCycle($ciclo) as $item)
+                @foreach($ciclo->detalles()->where('representante_id', $representative->id)->with(['producto.medicalSpecialties'])->get() as $item)
                     <tr>
-                        <td>{{ $item->producto && $item->producto->medicalSpecialty ? $item->producto->medicalSpecialty->name : 'Especialidad eliminada' }}</td>
+                        <td>{{ $item->producto && $item->producto->medicalSpecialties->isNotEmpty() ? $item->producto->medicalSpecialties->first()->name : 'Sin especialidad' }}</td>
                         <td>{{ $item->producto ? $item->producto->name : 'Producto eliminado' }}</td>
                         <td style="text-align: center;">{{ $item->cantidad_total }}  </td>
                         <td style="text-align: center;">{{ $item->cantidad_con_porcentaje }}  </td>

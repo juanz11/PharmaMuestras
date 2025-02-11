@@ -27,6 +27,11 @@ class Ciclo extends Model
         return $this->hasMany(DetalleCiclo::class);
     }
 
+    public function detalles(): HasMany
+    {
+        return $this->hasMany(DetalleCiclo::class);
+    }
+
     public function getRepresentativesWithProducts()
     {
         return Representative::whereHas('cicloProducts', function ($query) {

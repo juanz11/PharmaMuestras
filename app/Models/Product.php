@@ -14,9 +14,8 @@ class Product extends Model
     protected $fillable = [
         'name',
         'quantity',
-        'image_path',
         'valor',
-        'medical_specialty_id'
+        'image_path'
     ];
 
     protected $casts = [
@@ -24,8 +23,8 @@ class Product extends Model
         'quantity' => 'integer'
     ];
 
-    public function medicalSpecialty()
+    public function medicalSpecialties()
     {
-        return $this->belongsTo(MedicalSpecialty::class);
+        return $this->belongsToMany(MedicalSpecialty::class);
     }
 }

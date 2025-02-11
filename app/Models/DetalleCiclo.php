@@ -34,6 +34,6 @@ class DetalleCiclo extends Model
 
     public function producto(): BelongsTo
     {
-        return $this->belongsTo(Product::class, 'producto_id');
+        return $this->belongsTo(Product::class, 'producto_id')->with('medicalSpecialties');
     }
 }
