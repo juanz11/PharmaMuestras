@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Exports\CicloExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CicloController extends Controller
 {
@@ -365,5 +367,10 @@ class CicloController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error al eliminar el ciclo: ' . $e->getMessage());
         }
+    }
+
+    public function exportToExcel(Ciclo $ciclo)
+    {
+        return Excel::download(new CicloExport($ciclo), 'ciclo-' . $ciclo->id . '.xlsx');
     }
 }

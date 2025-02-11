@@ -26,6 +26,11 @@
                         Descargar PDF
                     </a>
                 </div>
+                <div>
+                    <a href="{{ route('ciclos.excel', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded inline-block" style="background-color: #28a745 !important;">
+                        Exportar Excel
+                    </a>
+                </div>
                 @if($ciclo->status !== 'pendiente')
                 <div>
                     <a href="{{ route('ciclos.invoice', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded inline-block" style="background-color: #198754 !important;">
