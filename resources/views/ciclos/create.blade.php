@@ -17,26 +17,6 @@
                                 Seleccionar Todos
                             </button>
                         </div>
-                        
-                        <div class="mb-4">
-                            <label for="fecha_inicio" class="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
-                            <input type="date" name="fecha_inicio" id="fecha_inicio" 
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('fecha_inicio') border-red-500 @enderror"
-                                   value="{{ old('fecha_inicio') }}">
-                            @error('fecha_inicio')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="fecha_fin" class="block text-sm font-medium text-gray-700">Fecha de Fin</label>
-                            <input type="date" name="fecha_fin" id="fecha_fin" 
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('fecha_fin') border-red-500 @enderror"
-                                   value="{{ old('fecha_fin') }}">
-                            @error('fecha_fin')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
 
                         <div class="grid grid-cols-3 gap-4" id="representantes-lista">
                             @if($representantes->isEmpty())
@@ -155,12 +135,6 @@
                     return;
                 }
 
-                const fechaFin = document.getElementById('fecha_fin').value;
-                if (!fechaFin) {
-                    alert('Por favor, ingrese una fecha de cierre.');
-                    return;
-                }
-
                 paso1.style.display = 'none';
                 paso2.style.display = 'block';
                 btnAnterior.style.display = 'block';
@@ -184,7 +158,6 @@
                     const formData = {
                         representantes: [],
                         porcentaje_hospitalario: document.getElementById('porcentaje_hospitalario').value,
-                        fecha_fin: document.getElementById('fecha_fin').value,
                         detalles: []
                     };
 
