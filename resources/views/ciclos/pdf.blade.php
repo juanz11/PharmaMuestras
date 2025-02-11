@@ -368,6 +368,78 @@
             </table>
         </div>
 
+        <div class="section-title" style="margin-top: 40px;">Valor de Productos Entregados</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Representante</th>
+                    <th>Producto</th>
+                    <th>Especialidad</th>
+                    <th class="text-center">Regular</th>
+                    <th class="text-center">Hosp.</th>
+                    <th class="text-center">Valor</th>
+                    <th class="text-center">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $totalRegularGeneral = 0;
+                    $totalHospitalarioGeneral = 0;
+                    $totalValorGeneral = 0;
+                    $totalGeneral = 0;
+                @endphp
+
+                @foreach($detallesPorRepresentante as $representante => $detalles)
+                    @php
+                        $subtotalRegular = 0;
+                        $subtotalHospitalario = 0;
+                        $subtotalValor = 0;
+                        $subtotal = 0;
+                    @endphp
+
+                    @foreach($detalles as $detalle)
+                        @php
+                            $cantidadRegular = $detalle->cantidad_total;
+                            $cantidadHospitalaria = round($detalle->cantidad_total * ($ciclo->porcentaje_hospitalario / 100));
+                            $total = $cantidadRegular + $cantidadHospitalaria;
+                            $valor = $detalle->producto ? $total * floatval($detalle->producto->valor) : 0;
+                            
+                            $subtotalRegular += $cantidadRegular;
+                            $subtotalHospitalario += $cantidadHospitalaria;
+                            $subtotalValor += $valor;
+                            $subtotal += $total;
+                        @endphp
+                        <tr>
+                            <td>{{ $representante }}</td>
+                            <td>{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
+                            <td>{{ $detalle->producto && $detalle->producto->medicalSpecialties->isNotEmpty() ? $detalle->producto->medicalSpecialties->first()->name : 'Sin especialidad' }}</td>
+                            <td class="text-center">{{ $cantidadRegular }}</td>
+                            <td class="text-center">{{ $cantidadHospitalaria }}</td>
+                            <td class="text-center">${{ number_format($valor, 2) }}</td>
+                            <td class="text-center">{{ $total }}</td>
+                        </tr>
+                    @endforeach
+
+                    @php
+                        $totalRegularGeneral += $subtotalRegular;
+                        $totalHospitalarioGeneral += $subtotalHospitalario;
+                        $totalValorGeneral += $subtotalValor;
+                        $totalGeneral += $subtotal;
+                    @endphp
+
+                  
+                @endforeach
+
+                <tr class="total">
+                    <td colspan="3"><strong>TOTAL GENERAL</strong></td>
+                    <td class="text-center"><strong>{{ $totalRegularGeneral }}</strong></td>
+                    <td class="text-center"><strong>{{ $totalHospitalarioGeneral }}</strong></td>
+                    <td class="text-center"><strong>${{ number_format($totalValorGeneral, 2) }}</strong></td>
+                    <td class="text-center"><strong>{{ $totalGeneral }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
     <div class="footer">
         {{ now()->year }} Sistema de Gestión de Muestras Médicas - Página 1
     </div>
