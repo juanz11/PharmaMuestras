@@ -137,12 +137,12 @@
                                                         @php
                                                             $detalle = $productoDetalles->where('especialidad_id', $especialidad->id)->first();
                                                             if ($detalle) {
-                                                                $totalProducto += $detalle->cantidad_con_porcentaje;
+                                                                $totalProducto += $detalle->cantidad_total;
                                                             }
                                                         @endphp
                                                         <td class="px-4 py-2 whitespace-nowrap">
                                                             @if($detalle)
-                                                                {{ round($detalle->cantidad_con_porcentaje) }}
+                                                                {{ round($detalle->cantidad_total) }}
                                                                 <div class="text-xs text-gray-500">
                                                                     ({{ $detalle->cantidad_por_doctor }} und)
                                                                 </div>
@@ -224,7 +224,7 @@
                                                     });
                                                 @endphp
                                                 <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                                    {{ $detalle ? round($detalle->cantidad_con_porcentaje) : '-' }}
+                                                    {{ $detalle ? round($detalle->cantidad_total) : '-' }}
                                                 </td>
                                             @endforeach
                                         @endforeach
@@ -260,14 +260,17 @@
                                     @foreach($especialidades as $especialidad)
                                         @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
                                             @php
-                                                $total = collect($detallesPorRepresentante)
+                                                $totalRegular = collect($detallesPorRepresentante)
                                                     ->flatten(1)
                                                     ->where('especialidad_id', $especialidad->id)
                                                     ->where('producto_id', $productoId)
-                                                    ->sum('cantidad_con_porcentaje');
+                                                    ->sum('cantidad_total');
+                                                
+                                                $totalHospitalario = $totalRegular * ($ciclo->porcentaje_hospitalario / 100);
+                                                $granTotal = $totalRegular + $totalHospitalario;
                                             @endphp
                                             <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                                {{ $total ? round($total) : '-' }}
+                                                {{ $granTotal > 0 ? round($granTotal) : '-' }}
                                             </td>
                                         @endforeach
                                     @endforeach
@@ -294,7 +297,7 @@
                                         ->flatten(1)
                                         ->groupBy('producto_id')
                                         ->map(function ($grupo) {
-                                            return $grupo->sum('cantidad_con_porcentaje');
+                                            return $grupo->sum('cantidad_total');
                                         });
                                 @endphp
                         
