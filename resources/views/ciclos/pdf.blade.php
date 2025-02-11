@@ -127,20 +127,7 @@
             <th style="width: 30%;">Fecha:</th>
             <td>{{ $ciclo->fecha_inicio->format('d/m/Y') }}</td>
         </tr>
-        <tr>
-            <th>Status</th>
-            <td>
-                <span style="
-                    background-color: {{ $ciclo->status === 'entregado' ? '#27ae60' : '#f1c40f' }};
-                    color: white;
-                    padding: 3px 8px;
-                    border-radius: 3px;
-                    font-size: 11px;
-                ">
-                    {{ ucfirst($ciclo->status) }}
-                </span>
-            </td>
-        </tr>
+       
         <tr>
             <th>Porcentaje Hospitalario</th>
             <td>{{ $ciclo->porcentaje_hospitalario }}%</td>
@@ -188,12 +175,12 @@
                                 @php
                                     $detalle = $productoDetalles->where('especialidad_id', $especialidad->id)->first();
                                     if ($detalle) {
-                                        $totalProducto += $detalle->cantidad_con_porcentaje;
+                                        $totalProducto += $detalle->cantidad_total;
                                     }
                                 @endphp
                                 <td style="text-align: center;">
                                     @if($detalle)
-                                        {{ $detalle->cantidad_con_porcentaje }}
+                                        {{ round($detalle->cantidad_total) }}
                                         <div style="font-size: 9px; color: #666;">
                                             ({{ $detalle->cantidad_por_doctor }} x doctor)
                                         </div>
@@ -203,13 +190,13 @@
                                 </td>
                             @endforeach
                             <td style="text-align: center;">
-                                {{ $totalProducto * ($ciclo->porcentaje_hospitalario / 100) }}
+                                {{ round($totalProducto * ($ciclo->porcentaje_hospitalario / 100)) }}
                             </td>
                             <td style="text-align: center; font-weight: bold;">
-                                {{ $totalProducto }}
+                                {{ round($totalProducto * (1 + $ciclo->porcentaje_hospitalario / 100)) }}
                                 @if($producto && $producto->value > 0)
                                     <div style="font-size: 9px; color: #666;">
-                                        (${{ number_format($totalProducto * $producto->value, 2) }})
+                                        (${{ number_format(($totalProducto * (1 + $ciclo->porcentaje_hospitalario / 100)) * $producto->value, 2) }})
                                     </div>
                                 @endif
                             </td>
@@ -275,27 +262,26 @@
                                     });
                                 @endphp
                                 <td style="text-align: center;">
-                                    {{ $detalle ? $detalle->cantidad_con_porcentaje : '-' }}
+                                    {{ $detalle ? round($detalle->cantidad_total) : '-' }}
                                 </td>
                             @endforeach
                         @endforeach
                     </tr>
                 @endforeach
                 <tr class="total-row">
-                    <td>Valor Total</td>
+                    <td>Hospitalario ({{ $ciclo->porcentaje_hospitalario }}%)</td>
                     @foreach($especialidades as $especialidad)
                         @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
                             @php
-                                $producto = \App\Models\Product::find($productoId);
-                                $totalCantidad = collect($detallesPorRepresentante)
+                                $totalRegular = collect($detallesPorRepresentante)
                                     ->flatten(1)
                                     ->where('especialidad_id', $especialidad->id)
                                     ->where('producto_id', $productoId)
-                                    ->sum('cantidad_con_porcentaje');
-                                $valorTotal = $producto ? $totalCantidad * $producto->value : 0;
+                                    ->sum('cantidad_total');
+                                $totalHospitalario = $totalRegular * ($ciclo->porcentaje_hospitalario / 100);
                             @endphp
                             <td style="text-align: center;">
-                                {{ $valorTotal ? '$' . number_format($valorTotal, 2) : '-' }}
+                                {{ $totalHospitalario > 0 ? round($totalHospitalario) : '-' }}
                             </td>
                         @endforeach
                     @endforeach
@@ -305,14 +291,16 @@
                     @foreach($especialidades as $especialidad)
                         @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
                             @php
-                                $total = collect($detallesPorRepresentante)
+                                $totalRegular = collect($detallesPorRepresentante)
                                     ->flatten(1)
                                     ->where('especialidad_id', $especialidad->id)
                                     ->where('producto_id', $productoId)
-                                    ->sum('cantidad_con_porcentaje');
+                                    ->sum('cantidad_total');
+                                $totalHospitalario = $totalRegular * ($ciclo->porcentaje_hospitalario / 100);
+                                $granTotal = $totalRegular + $totalHospitalario;
                             @endphp
                             <td style="text-align: center;">
-                                {{ $total ?: '-' }}
+                                {{ $granTotal > 0 ? round($granTotal) : '-' }}
                             </td>
                         @endforeach
                     @endforeach
@@ -336,21 +324,23 @@
                             ->flatten(1)
                             ->groupBy('producto_id')
                             ->map(function ($grupo) {
-                                return $grupo->sum('cantidad_con_porcentaje');
+                                $cantidadTotal = $grupo->sum('cantidad_total');
+                                return $cantidadTotal;
                             });
                     @endphp
                     
                     @foreach($resumenPorProducto as $productoId => $total)
                         @php
                             $producto = \App\Models\Product::find($productoId);
+                            $totalConHospitalario = $total * (1 + $ciclo->porcentaje_hospitalario / 100);
                         @endphp
                         <tr>
                             <td>{{ $producto ? $producto->name : 'Producto eliminado' }}</td>
                             <td style="text-align: center;">
-                                {{ $total }}
+                                {{ round($totalConHospitalario) }}
                                 @if($producto && $producto->value > 0)
                                     <div style="font-size: 9px; color: #666;">
-                                        (${{ number_format($total * $producto->value, 2) }})
+                                        (${{ number_format($totalConHospitalario * $producto->value, 2) }})
                                     </div>
                                 @endif
                             </td>
@@ -360,11 +350,11 @@
                     <tr class="total-row">
                         <td>Total General</td>
                         <td style="text-align: center;">
-                            {{ $resumenPorProducto->sum() }}
+                            {{ round($resumenPorProducto->sum() * (1 + $ciclo->porcentaje_hospitalario / 100)) }}
                             @php
-                                $valorTotal = $resumenPorProducto->map(function($cantidad, $productoId) {
+                                $valorTotal = $resumenPorProducto->map(function($cantidad, $productoId) use ($ciclo) {
                                     $producto = \App\Models\Product::find($productoId);
-                                    return $producto ? $cantidad * $producto->value : 0;
+                                    return $producto ? $cantidad * (1 + $ciclo->porcentaje_hospitalario / 100) * $producto->value : 0;
                                 })->sum();
                             @endphp
                             @if($valorTotal > 0)
