@@ -144,9 +144,10 @@
                             ->sortBy('name');
                     @endphp
                     @foreach($especialidades as $especialidad)
-                        <th style="text-align: center; width: {{ 60 / $especialidades->count() }}%;">{{ $especialidad->name }}</th>
+                        <th style="text-align: center; width: {{ 50 / $especialidades->count() }}%;">{{ $especialidad->name }}</th>
                     @endforeach
                     <th style="text-align: center; width: 10%;">Hosp.</th>
+                    <th style="text-align: center; width: 10%;">Valor</th>
                     <th style="text-align: center; width: 10%;">Total</th>
                 </tr>
             </thead>
@@ -154,10 +155,11 @@
                 @php
                     $productos = $ciclo->detalles()
                         ->where('representante_id', $representative->id)
-                        ->with(['producto.medicalSpecialties'])
+                        ->with(['producto' => function($query) {
+                            $query->select('id', 'name', 'valor');
+                        }, 'producto.medicalSpecialties'])
                         ->get()
                         ->groupBy('producto_id');
-                    
                 @endphp
 
                 @foreach($productos as $productoId => $detalles)
@@ -183,8 +185,10 @@
                         @php
                             $hospitalario = $totalRegular * ($ciclo->porcentaje_hospitalario / 100);
                             $total = $totalRegular + $hospitalario;
+                            $valor = $producto ? $total * floatval($producto->valor) : 0;
                         @endphp
                         <td style="text-align: center;">{{ round($hospitalario) }}</td>
+                        <td style="text-align: center;">${{ number_format($valor, 2) }}</td>
                         <td style="text-align: center;">{{ round($total) }}</td>
                     </tr>
                 @endforeach
