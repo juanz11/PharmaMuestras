@@ -4,12 +4,12 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Detalles del Ciclo
             </h2>
-            <div class="flex space-x-4">
+            <div class="flex space-x-4 items-center">
                 @if($ciclo->status === 'pendiente')
                 <form action="{{ route('ciclos.deliver', $ciclo) }}" method="POST" class="inline" id="deliverForm">
                     @csrf
                     @method('PUT')
-                    <div class="mb-3">
+                    <div class="flex items-center">
                         <input type="text" 
                                name="numero_descargo"
                                class="border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mr-2" 
@@ -22,13 +22,13 @@
                 </form>
                 @endif
                 <div>
-                    <a href="{{ route('ciclos.pdf', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded" style="background-color: #dc3545 !important;">
+                    <a href="{{ route('ciclos.pdf', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded inline-block" style="background-color: #dc3545 !important;">
                         Descargar PDF
                     </a>
                 </div>
                 @if($ciclo->status !== 'pendiente')
-                <div style="padding-left: 10px;">
-                    <a href="{{ route('ciclos.invoice', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded" style="background-color: #198754 !important;">
+                <div>
+                    <a href="{{ route('ciclos.invoice', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded inline-block" style="background-color: #198754 !important;">
                         Notas por Representante
                     </a>
                 </div>
