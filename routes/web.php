@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MedicalSpecialtyController;
 use App\Http\Controllers\RepresentativeController;
 use App\Http\Controllers\CicloController;
+use App\Http\Controllers\DetalleCicloController;
 use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\SuperAdmin;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,12 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
     Route::get('/ciclos/{ciclo}/invoice', [CicloController::class, 'generateInvoice'])->name('ciclos.invoice');
     Route::get('/ciclos/{ciclo}/reporte', [CicloController::class, 'generarReporte'])->name('ciclos.reporte');
     Route::put('/ciclos/{ciclo}/deliver', [CicloController::class, 'deliver'])->name('ciclos.deliver');
+    Route::patch('/ciclos/{ciclo}/update-descargo', [CicloController::class, 'updateDescargo'])->name('ciclos.update-descargo');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::patch('/detalle-ciclos/update-descargo', [DetalleCicloController::class, 'updateNumeroDescargo'])
+        ->name('detalle-ciclos.update-descargo');
 });
 
 // Rutas de administración

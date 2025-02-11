@@ -135,11 +135,15 @@ class CicloController extends Controller
         return $pdf->stream('nota_entrega.pdf');
     }
 
-    public function deliver(Ciclo $ciclo)
+    public function deliver(Request $request, Ciclo $ciclo)
     {
         if ($ciclo->status !== 'pendiente') {
-            return back()->with('error', 'Este ciclo ya ha sido entregado.');
+            return back()->with('error', 'Solo se pueden entregar ciclos en estado pendiente.');
         }
+
+        $request->validate([
+            'numero_descargo' => 'required|string|max:255'
+        ]);
 
         try {
             DB::beginTransaction();
@@ -164,23 +168,12 @@ class CicloController extends Controller
                 $mensaje .= "<p class='font-semibold text-lg'>Los siguientes productos no tienen suficiente stock:</p>";
                 $mensaje .= "<div class='space-y-2'>";
                 
-                // Agrupar por producto para evitar repeticiones
-                $faltantesAgrupados = collect($faltantes)->groupBy('producto')->map(function($grupo) {
-                    return [
-                        'producto' => $grupo->first()['producto'],
-                        'requeridos' => $grupo->pluck('requerido'),
-                        'disponible' => $grupo->first()['disponible']
-                    ];
-                });
-
-                foreach ($faltantesAgrupados as $faltante) {
-                    $totalRequerido = $faltante['requeridos']->sum();
+                foreach ($faltantes as $faltante) {
                     $mensaje .= "<div class='faltante-item'>";
                     $mensaje .= "<p class='font-medium'>{$faltante['producto']}</p>";
                     $mensaje .= "<div class='ml-4'>";
-                    $mensaje .= "<p>Total Requerido: <span class='font-semibold'>{$totalRequerido}</span></p>";
+                    $mensaje .= "<p>Requerido: <span class='font-semibold'>{$faltante['requerido']}</span></p>";
                     $mensaje .= "<p>Disponible: <span class='font-semibold'>{$faltante['disponible']}</span></p>";
-                    $mensaje .= "<p class='text-red-700'>Faltante: <span class='font-semibold'>" . ($totalRequerido - $faltante['disponible']) . "</span></p>";
                     $mensaje .= "</div>";
                     $mensaje .= "</div>";
                 }
@@ -196,18 +189,59 @@ class CicloController extends Controller
                 $producto->save();
             }
 
-            // Actualizar estado del ciclo
-            $ciclo->update([
-                'status' => 'entregado',
-                'delivered_at' => now()
-            ]);
+            // Actualizar estado del ciclo y número de descargo
+            $ciclo->status = 'entregado';
+            $ciclo->numero_descargo = $request->numero_descargo;
+            $ciclo->delivered_at = now();
+            $ciclo->save();
 
             DB::commit();
-            return back()->with('success', 'Ciclo entregado exitosamente y stock actualizado.');
+            return redirect()->route('ciclos.show', $ciclo)->with('success', 'Ciclo entregado exitosamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error al procesar la entrega: ' . $e->getMessage());
+        }
+    }
+
+    public function updateDescargo(Request $request, Ciclo $ciclo)
+    {
+        \Log::info('Actualizando número de descargo', [
+            'ciclo_id' => $ciclo->id,
+            'numero_descargo_actual' => $ciclo->numero_descargo,
+            'numero_descargo_nuevo' => $request->numero_descargo
+        ]);
+
+        $request->validate([
+            'numero_descargo' => 'required|string|max:255'
+        ]);
+
+        if ($ciclo->status !== 'pendiente') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se puede actualizar el número de descargo en ciclos pendientes'
+            ], 422);
+        }
+
+        try {
+            $ciclo->numero_descargo = $request->numero_descargo;
+            $ciclo->save();
+
+            \Log::info('Número de descargo actualizado', [
+                'ciclo_id' => $ciclo->id,
+                'numero_descargo' => $ciclo->numero_descargo
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Número de descargo actualizado exitosamente'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error al actualizar número de descargo: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el número de descargo'
+            ], 500);
         }
     }
 

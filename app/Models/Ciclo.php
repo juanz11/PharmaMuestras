@@ -14,6 +14,7 @@ class Ciclo extends Model
         'status',
         'delivered_at',
         'porcentaje_hospitalario',
+        'numero_descargo'
     ];
 
     protected $casts = [

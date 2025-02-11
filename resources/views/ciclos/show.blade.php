@@ -6,12 +6,19 @@
             </h2>
             <div class="flex space-x-4">
                 @if($ciclo->status === 'pendiente')
-                <form action="{{ route('ciclos.deliver', $ciclo) }}" method="POST" class="inline">
+                <form action="{{ route('ciclos.deliver', $ciclo) }}" method="POST" class="inline" id="deliverForm">
                     @csrf
                     @method('PUT')
-                    <button type="submit" class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important;">
-                        Efectuar Entrega
-                    </button>
+                    <div class="mb-3">
+                        <input type="text" 
+                               name="numero_descargo"
+                               class="border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mr-2" 
+                               placeholder="Ingrese # de descargo"
+                               required>
+                        <button type="submit" class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important;">
+                            Efectuar Entrega
+                        </button>
+                    </div>
                 </form>
                 @endif
                 @if($ciclo->status !== 'pendiente')
@@ -76,7 +83,12 @@
                             <p class="text-sm text-gray-600">Porcentaje Hospitalario</p>
                             <p class="font-medium">{{ $ciclo->porcentaje_hospitalario }}%</p>
                         </div>
-      
+                        @if($ciclo->status !== 'pendiente')
+                        <div>
+                            <p class="text-sm text-gray-600">Número de Descargo</p>
+                            <p class="font-medium">{{ $ciclo->numero_descargo ?? 'No especificado' }}</p>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -313,3 +325,28 @@
         </div>
     </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deliverForm = document.querySelector('#deliverForm');
+    const numeroDescargoInput = document.querySelector('input[name="numero_descargo"]');
+    
+    if (deliverForm && numeroDescargoInput) {
+        deliverForm.addEventListener('submit', function(e) {
+            const valor = numeroDescargoInput.value.trim();
+            if (!valor) {
+                e.preventDefault();
+                alert('Debe ingresar el número de descargo antes de efectuar la entrega');
+                numeroDescargoInput.focus();
+                numeroDescargoInput.classList.add('border-red-500');
+            }
+        });
+
+        numeroDescargoInput.addEventListener('input', function() {
+            this.classList.remove('border-red-500');
+        });
+    }
+});
+</script>
+@endpush

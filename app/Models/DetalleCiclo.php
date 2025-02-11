@@ -14,7 +14,8 @@ class DetalleCiclo extends Model
         'producto_id',
         'cantidad_por_doctor',
         'cantidad_total',
-        'cantidad_con_porcentaje'
+        'cantidad_con_porcentaje',
+        'numero_descargo'
     ];
 
     public function ciclo(): BelongsTo
