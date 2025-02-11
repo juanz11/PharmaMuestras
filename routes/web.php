@@ -41,6 +41,7 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
     Route::get('/ciclos/{ciclo}/pdf', [CicloController::class, 'generatePdf'])->name('ciclos.pdf');
     Route::get('/ciclos/{ciclo}/invoice', [CicloController::class, 'generateInvoice'])->name('ciclos.invoice');
     Route::get('/ciclos/{ciclo}/reporte', [CicloController::class, 'generarReporte'])->name('ciclos.reporte');
+    Route::get('/ciclos/{ciclo}/configuracion', [CicloController::class, 'getConfiguracion'])->name('ciclos.configuracion');
     Route::put('/ciclos/{ciclo}/deliver', [CicloController::class, 'deliver'])->name('ciclos.deliver');
     Route::patch('/ciclos/{ciclo}/update-descargo', [CicloController::class, 'updateDescargo'])->name('ciclos.update-descargo');
 });

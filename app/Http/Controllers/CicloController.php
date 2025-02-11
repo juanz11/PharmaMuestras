@@ -26,11 +26,33 @@ class CicloController extends Controller
         $representantes = Representative::with(['doctors' => function($query) {
             $query->select('id', 'representative_id', 'medical_specialty_id', 'doctors_count');
         }, 'doctors.medicalSpecialty'])->get();
+
+        $ciclosAnteriores = Ciclo::orderBy('created_at', 'desc')
+            ->with(['detallesCiclo.producto.medicalSpecialties'])
+            ->get();
         
         $especialidades = MedicalSpecialty::with('products')->get();
         $productos = Product::all();
         
-        return view('ciclos.create', compact('representantes', 'especialidades', 'productos'));
+        return view('ciclos.create', compact('representantes', 'especialidades', 'productos', 'ciclosAnteriores'));
+    }
+
+    public function getConfiguracion(Ciclo $ciclo)
+    {
+        $ciclo->load(['detallesCiclo.producto.medicalSpecialties']);
+        
+        return response()->json([
+            'porcentaje_hospitalario' => $ciclo->porcentaje_hospitalario,
+            'detalles' => $ciclo->detallesCiclo->map(function($detalle) {
+                return [
+                    'producto_id' => $detalle->producto_id,
+                    'cantidad_por_doctor' => $detalle->cantidad_por_doctor,
+                    'producto' => [
+                        'medical_specialties' => $detalle->producto->medicalSpecialties
+                    ]
+                ];
+            })
+        ]);
     }
 
     public function store(Request $request)

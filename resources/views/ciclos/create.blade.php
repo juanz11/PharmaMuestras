@@ -10,6 +10,31 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 <form id="ciclo-form">
                     @csrf
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Configuración Inicial</h3>
+                        <div class="flex space-x-4 mb-6">
+                            <button type="button" id="nuevoCiclo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                Crear Nuevo Ciclo
+                            </button>
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">O cargar configuración desde ciclo anterior:</label>
+                                <div class="flex space-x-2">
+                                    <select id="cicloPrevio" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                        <option value="">Seleccionar ciclo anterior...</option>
+                                        @foreach($ciclosAnteriores as $ciclo)
+                                            <option value="{{ $ciclo->id }}">
+                                                Ciclo {{ $ciclo->id }} ({{ $ciclo->fecha_inicio->format('d/m/Y') }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button" id="cargarCiclo" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                        Cargar Configuración
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mb-8" id="paso1">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold">Paso 1: Seleccionar Representantes</h3>
@@ -120,6 +145,8 @@
             const btnSiguiente = document.getElementById('siguiente');
             const btnConfirmar = document.getElementById('confirmar');
             const btnSeleccionarTodos = document.getElementById('seleccionarTodos');
+            const btnCargarCiclo = document.getElementById('cargarCiclo');
+            const selectCicloPrevio = document.getElementById('cicloPrevio');
 
             // Evento para Seleccionar Todos
             btnSeleccionarTodos.addEventListener('click', function() {
@@ -294,6 +321,70 @@
                         });
                     }
                 });
+            });
+
+            // Función para cargar la configuración de un ciclo previo
+            btnCargarCiclo.addEventListener('click', async function() {
+                const cicloId = selectCicloPrevio.value;
+                if (!cicloId) return;
+
+                try {
+                    const response = await fetch(`/ciclos/${cicloId}/configuracion`);
+                    if (!response.ok) throw new Error('Error al cargar la configuración');
+                    
+                    const data = await response.json();
+                    console.log('Datos cargados:', data);
+                    
+                    // Cargar porcentaje hospitalario
+                    document.querySelector('input[name="porcentaje_hospitalario"]').value = data.porcentaje_hospitalario;
+                    
+                    // Limpiar productos existentes
+                    document.querySelectorAll('.productos-dinamicos').forEach(container => {
+                        container.innerHTML = '';
+                    });
+
+                    // Agrupar detalles por especialidad
+                    const detallesPorEspecialidad = {};
+                    data.detalles.forEach(detalle => {
+                        if (detalle.producto && detalle.producto.medical_specialties && detalle.producto.medical_specialties.length > 0) {
+                            const especialidadId = detalle.producto.medical_specialties[0].id;
+                            if (!detallesPorEspecialidad[especialidadId]) {
+                                detallesPorEspecialidad[especialidadId] = [];
+                            }
+                            detallesPorEspecialidad[especialidadId].push(detalle);
+                        }
+                    });
+
+                    // Cargar productos por especialidad
+                    Object.entries(detallesPorEspecialidad).forEach(([especialidadId, detalles]) => {
+                        const contenedor = document.querySelector(`.productos-dinamicos[data-especialidad-id="${especialidadId}"]`);
+                        if (contenedor) {
+                            detalles.forEach(detalle => {
+                                const nuevoProducto = crearProductoTemplate(especialidadId);
+                                contenedor.appendChild(nuevoProducto);
+
+                                // Seleccionar el producto y establecer la cantidad
+                                const select = nuevoProducto.querySelector('.producto-select');
+                                const cantidadInput = nuevoProducto.querySelector('.cantidad-input');
+                                
+                                if (select) {
+                                    select.value = detalle.producto_id;
+                                }
+                                if (cantidadInput) {
+                                    cantidadInput.value = detalle.cantidad_por_doctor;
+                                }
+                            });
+                        }
+                    });
+
+                    // Mostrar paso 2
+                    paso1.style.display = 'none';
+                    paso2.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al cargar la configuración del ciclo');
+                }
             });
         });
     </script>
