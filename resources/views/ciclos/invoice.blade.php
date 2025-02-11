@@ -8,43 +8,51 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
+            font-size: 12px;
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            max-width: 200px;
             margin-bottom: 20px;
         }
+        .logo {
+            max-width: 150px;
+            margin-bottom: 15px;
+        }
         .invoice-info {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         .invoice-info table {
             width: 100%;
+            font-size: 11px;
         }
         .invoice-info td {
-            padding: 5px;
+            padding: 3px;
         }
         .products-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            font-size: 10px;
         }
         .products-table th, .products-table td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 4px;
             text-align: left;
+            word-wrap: break-word;
+            max-width: 150px;
         }
         .products-table th {
             background-color: #f8f9fa;
+            font-size: 10px;
+            text-align: center;
+            white-space: normal;
         }
         .totals {
-            margin-top: 30px;
+            margin-top: 20px;
             text-align: right;
         }
         .signature {
-            margin-top: 50px;
+            margin-top: 30px;
             text-align: center;
         }
         .signature-line {
@@ -57,9 +65,28 @@
         }
         .representative-info {
             border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 10px;
+            margin-bottom: 15px;
             background-color: #f8f9fa;
+            font-size: 11px;
+        }
+        .representative-info h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .header h2 {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .products-table td {
+            font-size: 10px;
+            padding: 4px 6px;
+        }
+        .products-table td:first-child {
+            max-width: 120px;
+        }
+        .products-table th {
+            padding: 6px 4px;
         }
     </style>
 </head>
@@ -93,27 +120,72 @@
                     <td><strong>Fecha:</strong></td>
                     <td>{{ $ciclo->fecha_inicio->format('d/m/Y') }}</td>
                 </tr>
-              
-               
+                <tr>
+                    <td><strong>N° Descargo:</strong></td>
+                    <td>{{ $ciclo->numero_descargo ?: 'No especificado' }}</td>
+                    <td><strong>Hospitalario:</strong></td>
+                    <td>{{ $ciclo->porcentaje_hospitalario }}%</td>
+                </tr>
             </table>
         </div>
 
         <table class="products-table">
             <thead>
                 <tr>
-                    <th>Especialidad</th>
-                    <th>Producto</th>
-                    <th style="text-align: center;">Total Entregados</th>
-                    <th style="text-align: center;">Hospitalario</th>
+                    <th style="width: 20%;">Producto</th>
+                    @php
+                        $especialidades = $ciclo->detalles()
+                            ->where('representante_id', $representative->id)
+                            ->with(['producto.medicalSpecialties'])
+                            ->get()
+                            ->pluck('producto.medicalSpecialties')
+                            ->flatten()
+                            ->unique('id')
+                            ->sortBy('name');
+                    @endphp
+                    @foreach($especialidades as $especialidad)
+                        <th style="text-align: center; width: {{ 60 / $especialidades->count() }}%;">{{ $especialidad->name }}</th>
+                    @endforeach
+                    <th style="text-align: center; width: 10%;">Hosp.</th>
+                    <th style="text-align: center; width: 10%;">Total</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($ciclo->detalles()->where('representante_id', $representative->id)->with(['producto.medicalSpecialties'])->get() as $item)
+                @php
+                    $productos = $ciclo->detalles()
+                        ->where('representante_id', $representative->id)
+                        ->with(['producto.medicalSpecialties'])
+                        ->get()
+                        ->groupBy('producto_id');
+                    
+                @endphp
+
+                @foreach($productos as $productoId => $detalles)
+                    @php
+                        $producto = $detalles->first()->producto;
+                        $totalRegular = 0;
+                    @endphp
                     <tr>
-                        <td>{{ $item->producto && $item->producto->medicalSpecialties->isNotEmpty() ? $item->producto->medicalSpecialties->first()->name : 'Sin especialidad' }}</td>
-                        <td>{{ $item->producto ? $item->producto->name : 'Producto eliminado' }}</td>
-                        <td style="text-align: center;">{{ $item->cantidad_total }}  </td>
-                        <td style="text-align: center;">{{ $item->cantidad_con_porcentaje }}  </td>
+                        <td>{{ $producto ? $producto->name : 'Producto eliminado' }}</td>
+                        @foreach($especialidades as $especialidad)
+                            @php
+                                $detalle = $detalles->first(function($d) use ($especialidad) {
+                                    return $d->producto->medicalSpecialties->contains('id', $especialidad->id);
+                                });
+                                if ($detalle) {
+                                    $totalRegular += $detalle->cantidad_total;
+                                }
+                            @endphp
+                            <td style="text-align: center;">
+                                {{ $detalle ? $detalle->cantidad_total : '-' }}
+                            </td>
+                        @endforeach
+                        @php
+                            $hospitalario = $totalRegular * ($ciclo->porcentaje_hospitalario / 100);
+                            $total = $totalRegular + $hospitalario;
+                        @endphp
+                        <td style="text-align: center;">{{ round($hospitalario) }}</td>
+                        <td style="text-align: center;">{{ round($total) }}</td>
                     </tr>
                 @endforeach
             </tbody>
