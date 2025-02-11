@@ -64,8 +64,8 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $specialties = MedicalSpecialty::all();
-        return view('products.edit', compact('product', 'specialties'));
+        $medicalSpecialties = MedicalSpecialty::all();
+        return view('products.edit', compact('product', 'medicalSpecialties'));
     }
 
     /**

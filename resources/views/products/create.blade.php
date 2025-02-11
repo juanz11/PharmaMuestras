@@ -40,18 +40,75 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="medical_specialties" class="block text-sm font-medium text-gray-700">Especialidades Médicas</label>
-                            <select name="medical_specialties[]" id="medical_specialties" multiple 
-                                    class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Especialidades Médicas</label>
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                 @foreach($medicalSpecialties as $specialty)
-                                    <option value="{{ $specialty->id }}">{{ $specialty->name }}</option>
+                                    <div class="relative specialty-item">
+                                        <input type="checkbox" 
+                                               name="medical_specialties[]" 
+                                               id="specialty_{{ $specialty->id }}"
+                                               value="{{ $specialty->id }}"
+                                               class="specialty-checkbox absolute w-0 h-0 opacity-0" 
+                                               {{ in_array($specialty->id, old('medical_specialties', [])) ? 'checked' : '' }}>
+                                        <label for="specialty_{{ $specialty->id }}" 
+                                               class="specialty-label relative block p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:bg-gray-50">
+                                            <!-- Check icon -->
+                                            <div class="check-icon absolute top-2 right-2 w-4 h-4 hidden">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                                </svg>
+                                            </div>
+                                            <p class="font-medium">{{ $specialty->name }}</p>
+                                            @if($specialty->description)
+                                                <p class="text-xs opacity-75">{{ $specialty->description }}</p>
+                                            @endif
+                                        </label>
+                                    </div>
                                 @endforeach
-                            </select>
+                            </div>
                             @error('medical_specialties')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
-                            <p class="mt-1 text-xs text-gray-500">Mantén presionado Ctrl (Windows) o Command (Mac) para seleccionar múltiples especialidades</p>
+                            <p class="mt-2 text-xs text-gray-500">Haz clic en las especialidades para seleccionarlas o deseleccionarlas</p>
                         </div>
+
+                        <style>
+                            .specialty-item input:checked + label {
+                                background-color: #0d6efd;
+                                border-color: #0d6efd;
+                                color: white;
+                            }
+                            .specialty-item input:checked + label .check-icon {
+                                display: block;
+                            }
+                        </style>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const checkboxes = document.querySelectorAll('.specialty-checkbox');
+                                checkboxes.forEach(checkbox => {
+                                    updateCheckboxState(checkbox);
+                                    checkbox.addEventListener('change', function() {
+                                        updateCheckboxState(this);
+                                    });
+                                });
+                            });
+
+                            function updateCheckboxState(checkbox) {
+                                const label = checkbox.nextElementSibling;
+                                if (checkbox.checked) {
+                                    label.style.backgroundColor = '#0d6efd';
+                                    label.style.borderColor = '#0d6efd';
+                                    label.style.color = 'white';
+                                    label.querySelector('.check-icon').style.display = 'block';
+                                } else {
+                                    label.style.backgroundColor = '';
+                                    label.style.borderColor = '';
+                                    label.style.color = '';
+                                    label.querySelector('.check-icon').style.display = 'none';
+                                }
+                            }
+                        </script>
 
                         <div>
                             <x-input-label for="image" :value="__('Imagen del Producto (Opcional)')" />
