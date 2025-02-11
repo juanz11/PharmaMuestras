@@ -219,6 +219,29 @@
                                     </tr>
                                 @endforeach
                                 <!-- Fila de totales -->
+                                <tr class="bg-gray-100">
+                                    <td class="px-4 py-2 whitespace-nowrap">Hospitalario ({{ $ciclo->porcentaje_hospitalario }}%)</td>
+                                    <td class="px-4 py-2 whitespace-nowrap"></td>
+                                    @foreach($especialidades as $especialidad)
+                                        @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
+                                            <td class="px-4 py-2 whitespace-nowrap text-center border-l">
+                                                @php
+                                                    $totalRegular = 0;
+                                                    foreach($detallesPorRepresentante as $detalles) {
+                                                        foreach($detalles as $detalle) {
+                                                            if($detalle->especialidad_id == $especialidad->id && $detalle->producto_id == $productoId) {
+                                                                $totalRegular += $detalle->cantidad_total;
+                                                            }
+                                                        }
+                                                    }
+                                                    $totalHospitalario = $totalRegular * ($ciclo->porcentaje_hospitalario / 100);
+                                                @endphp
+                                                {{ $totalHospitalario > 0 ? round($totalHospitalario) : '-' }}
+                                            </td>
+                                        @endforeach
+                                    @endforeach
+                                </tr>
+
                                 <tr class="bg-gray-50 font-semibold">
                                     <td class="px-4 py-2 whitespace-nowrap">Total</td>
                                     <td class="px-4 py-2 whitespace-nowrap"></td>
@@ -272,10 +295,15 @@
                                         <td class="px-4 py-2 whitespace-nowrap">{{ round($total) }}</td>
                                     </tr>
                                 @endforeach
+
+                                <tr class="bg-gray-100">
+                                    <td class="px-4 py-2 whitespace-nowrap">Hospitalario ({{ $ciclo->porcentaje_hospitalario }}%)</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">{{ round($resumenPorProducto->sum() * ($ciclo->porcentaje_hospitalario / 100)) }}</td>
+                                </tr>
                         
                                 <tr class="bg-gray-50 font-semibold">
                                     <td class="px-4 py-2 whitespace-nowrap">Total General</td>
-                                    <td class="px-4 py-2 whitespace-nowrap">{{ round($resumenPorProducto->sum()) }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap">{{ round($resumenPorProducto->sum() * (1 + $ciclo->porcentaje_hospitalario / 100)) }}</td>
                                 </tr>
                             </tbody>
                         </table>
