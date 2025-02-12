@@ -367,21 +367,27 @@ class CicloController extends Controller
 
     public function destroy(Ciclo $ciclo)
     {
-        if ($ciclo->status !== 'pendiente') {
-            return back()->with('error', 'No se puede eliminar un ciclo que ya ha sido entregado.');
-        }
-
         try {
             DB::beginTransaction();
+
+            // Eliminar los descargos asociados
+            $ciclo->descargos()->delete();
+            
+            // Eliminar los detalles asociados
             $ciclo->detallesCiclo()->delete();
+            
+            // Finalmente eliminar el ciclo
             $ciclo->delete();
+
             DB::commit();
 
             return redirect()->route('ciclos.index')
                 ->with('success', 'Ciclo eliminado exitosamente.');
         } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Error al eliminar el ciclo: ' . $e->getMessage());
+            DB::rollback();
+            Log::error('Error al eliminar ciclo: ' . $e->getMessage());
+            return redirect()->route('ciclos.index')
+                ->with('error', 'Error al eliminar el ciclo: ' . $e->getMessage());
         }
     }
 
