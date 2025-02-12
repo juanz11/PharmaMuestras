@@ -62,7 +62,7 @@
                                 <select id="cicloPrevio" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                                     <option value="">Seleccionar ciclo anterior...</option>
                                     @foreach($ciclosAnteriores as $ciclo)
-                                        <option value="{{ $ciclo->id }}">Ciclo {{ $ciclo->id }} - {{ $ciclo->created_at->format('d/m/Y') }}</option>
+                                        <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }} - {{ $ciclo->created_at->format('d/m/Y') }}</option>
                                     @endforeach
                                 </select>
                                 <button type="button" 
