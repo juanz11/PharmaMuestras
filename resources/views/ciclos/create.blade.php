@@ -362,6 +362,13 @@
                         // Actualizar porcentaje hospitalario
                         document.getElementById('porcentaje_hospitalario').value = data.porcentaje_hospitalario;
 
+                        // Actualizar nombre del ciclo
+                        const cicloSeleccionado = selectCicloPrevio.options[selectCicloPrevio.selectedIndex];
+                        const numeroCiclo = cicloSeleccionado.textContent.match(/Ciclo (\d+)/);
+                        if (numeroCiclo && numeroCiclo[1]) {
+                            document.getElementById('nombre_ciclo').value = `Ciclo ${numeroCiclo[1]}`;
+                        }
+
                         // Mostrar mensaje de éxito
                         alert('Configuración cargada exitosamente');
                     }
