@@ -1,3 +1,7 @@
+@php
+    use App\Helpers\NumberToRoman;
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
@@ -28,7 +32,13 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach ($ciclos as $ciclo)
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ $ciclo->nombre ?: 'Ciclo ' . $ciclo->id }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @php
+                                            $numero = preg_match('/Ciclo (\d+)/', $ciclo->nombre ?: 'Ciclo ' . $ciclo->id, $matches) ? $matches[1] : null;
+                                            $numeroRomano = $numero ? NumberToRoman::convert($numero) : $numero;
+                                        @endphp
+                                        Ciclo {{ $numeroRomano }}
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $ciclo->fecha_inicio->format('Y-m-d') }}</td>
 
                                     <td class="px-6 py-4 whitespace-nowrap">

@@ -114,10 +114,16 @@
     </style>
 </head>
 <body>
+    @php
+        use App\Helpers\NumberToRoman;
+        $numero = preg_match('/Ciclo (\d+)/', $ciclo->nombre ?: 'Ciclo ' . $ciclo->id, $matches) ? $matches[1] : $ciclo->id;
+        $numeroRomano = NumberToRoman::convert($numero);
+    @endphp
+
     <div class="header">
         <h1>Reporte de Ciclo de Distribución</h1>
         <p style="margin: 5px 0 0 0; color: #666;">Generado el {{ $ciclo->fecha_inicio->format('d/m/Y') }}</p>
-        <h2 style="margin: 15px 0; font-size: 24px; text-align: center;">CICLO {{ $ciclo->id }}</h2>
+        <h2 style="margin: 15px 0; font-size: 24px; text-align: center;">CICLO {{ $numeroRomano }}</h2>
     </div>
 
     <!-- Información General -->
@@ -210,7 +216,7 @@
     <!-- Resumen Total -->
     <div style="page-break-before: always;">
         <div class="header">
-            <h2 style="margin: 15px 0; font-size: 24px; text-align: center;">RESUMEN TOTAL - CICLO {{ $ciclo->id }}</h2>
+            <h2 style="margin: 15px 0; font-size: 24px; text-align: center;">RESUMEN TOTAL - CICLO {{ $numeroRomano }}</h2>
         </div>
         
         @php

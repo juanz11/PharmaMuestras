@@ -1,3 +1,7 @@
+@php
+    use App\Helpers\NumberToRoman;
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -45,7 +49,7 @@
                             <select id="nombre_ciclo" name="nombre_ciclo" class="w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
                                 <option value="">Seleccionar número...</option>
                                 @for ($i = 1; $i <= 12; $i++)
-                                    <option value="Ciclo {{ $i }}">Ciclo {{ $i }}</option>
+                                    <option value="Ciclo {{ $i }}">Ciclo {{ NumberToRoman::convert($i) }}</option>
                                 @endfor
                             </select>
                         </div>
