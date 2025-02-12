@@ -95,14 +95,8 @@
                             @endphp
                             <div class="bg-white shadow rounded-lg p-6 mb-6">
                                 <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p class="text-sm text-gray-600">Estado</p>
-                                        <p class="font-medium">{{ ucfirst($ciclo->status) }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm text-gray-600">Fecha de Entrega</p>
-                                        <p class="font-medium">{{ $ciclo->delivered_at ? $ciclo->delivered_at->format('d/m/Y H:i') : 'No entregado' }}</p>
-                                    </div>
+                                   
+                                    
                                 </div>
                                 <div class="flex justify-between items-center mb-4">
                                     <h3 class="text-lg font-semibold">{{ $representante->name }}</h3>
