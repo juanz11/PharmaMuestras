@@ -134,12 +134,12 @@
                 <tr>
                     <th style="width: 20%;">Producto</th>
                     @php
+                        // Obtener solo las especialidades específicamente seleccionadas para este ciclo y representante
                         $especialidades = $ciclo->detalles()
                             ->where('representante_id', $representative->id)
-                            ->with(['producto.medicalSpecialties'])
+                            ->with('especialidad')
                             ->get()
-                            ->pluck('producto.medicalSpecialties')
-                            ->flatten()
+                            ->pluck('especialidad')
                             ->unique('id')
                             ->sortBy('name');
                     @endphp
@@ -157,7 +157,7 @@
                         ->where('representante_id', $representative->id)
                         ->with(['producto' => function($query) {
                             $query->select('id', 'name', 'valor');
-                        }, 'producto.medicalSpecialties'])
+                        }, 'especialidad'])
                         ->get()
                         ->groupBy('producto_id');
                 @endphp
@@ -172,7 +172,7 @@
                         @foreach($especialidades as $especialidad)
                             @php
                                 $detalle = $detalles->first(function($d) use ($especialidad) {
-                                    return $d->producto->medicalSpecialties->contains('id', $especialidad->id);
+                                    return $d->especialidad_id === $especialidad->id;
                                 });
                                 if ($detalle) {
                                     $totalRegular += $detalle->cantidad_total;
