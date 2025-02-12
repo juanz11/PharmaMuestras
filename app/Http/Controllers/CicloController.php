@@ -53,6 +53,26 @@ class CicloController extends Controller
         ]);
     }
 
+    public function getConfiguracionAnterior(Ciclo $ciclo)
+    {
+        $detalles = $ciclo->detallesCiclo()
+            ->with(['producto', 'especialidad'])
+            ->get()
+            ->map(function ($detalle) {
+                return [
+                    'especialidad_id' => $detalle->especialidad_id,
+                    'producto_id' => $detalle->producto_id,
+                    'cantidad_por_doctor' => $detalle->cantidad_por_doctor
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'porcentaje_hospitalario' => $ciclo->porcentaje_hospitalario,
+            'detalles' => $detalles
+        ]);
+    }
+
     public function store(Request $request)
     {
         DB::beginTransaction();

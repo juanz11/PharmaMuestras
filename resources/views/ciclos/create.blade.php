@@ -10,32 +10,6 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 <form id="ciclo-form">
                     @csrf
-                    <div class="mb-8">
-                        <h3 class="text-lg font-semibold mb-4">Configuración Inicial</h3>
-                        <div class="flex space-x-4 mb-6">
-                            <button type="button" id="nuevoCiclo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Crear Nuevo Ciclo
-                            </button>
-                            <div class="flex-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">O cargar configuración desde ciclo anterior:</label>
-                                <div class="flex space-x-2">
-                                    <select id="cicloPrevio" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                        <option value="">Seleccionar ciclo anterior...</option>
-                                        @foreach($ciclosAnteriores as $ciclo)
-                                            <option value="{{ $ciclo->id }}">Ciclo {{ $ciclo->id }} - {{ $ciclo->created_at->format('d/m/Y') }}</option>
-                                        @endforeach
-                                    </select>
-                                    <button type="button" 
-                                        id="cargarConfiguracion"
-                                        class="px-3 py-1 text-sm text-white rounded"
-                                        style="background-color: #0d6efd !important;">
-                                        Cargar Configuración
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="mb-8" id="paso1">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold">Paso 1: Seleccionar Representantes</h3>
@@ -64,7 +38,7 @@
                     </div>
 
                     <div class="mb-8" id="paso2" style="display: none;">
-                        <h3 class="text-lg font-semibold mb-4">Configuración de Productos</h3>
+                        <h3 class="text-lg font-semibold mb-4">Configuración del Ciclo</h3>
                         
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Ciclo:</label>
@@ -81,7 +55,25 @@
                             <input type="number" id="porcentaje_hospitalario" name="porcentaje_hospitalario" min="0" max="100" value="0"
                                 class="w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         </div>
-                        
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Cargar configuración desde ciclo anterior:</label>
+                            <div class="flex space-x-2">
+                                <select id="cicloPrevio" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <option value="">Seleccionar ciclo anterior...</option>
+                                    @foreach($ciclosAnteriores as $ciclo)
+                                        <option value="{{ $ciclo->id }}">Ciclo {{ $ciclo->id }} - {{ $ciclo->created_at->format('d/m/Y') }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" 
+                                    id="cargarConfiguracion"
+                                    class="px-3 py-1 text-sm text-white rounded"
+                                    style="background-color: #0d6efd !important;">
+                                    Cargar Configuración
+                                </button>
+                            </div>
+                        </div>
+
                         <div id="especialidades-config">
                             @foreach($especialidades as $especialidad)
                                 <div class="border p-4 rounded mb-4">
@@ -334,64 +326,45 @@
                 });
             });
 
-            // Función para cargar la configuración de un ciclo previo
+            // Función para cargar configuración de ciclo anterior
             btnCargarCiclo.addEventListener('click', async function() {
                 const cicloId = selectCicloPrevio.value;
-                if (!cicloId) return;
+                if (!cicloId) {
+                    alert('Por favor, seleccione un ciclo anterior');
+                    return;
+                }
 
                 try {
-                    const response = await fetch(`/ciclos/${cicloId}/configuracion`);
-                    if (!response.ok) throw new Error('Error al cargar la configuración');
-                    
+                    const response = await fetch(`/ciclos/${cicloId}/configuracion-anterior`);
                     const data = await response.json();
-                    console.log('Datos cargados:', data);
-                    
-                    // Cargar porcentaje hospitalario
-                    document.querySelector('input[name="porcentaje_hospitalario"]').value = data.porcentaje_hospitalario;
-                    
-                    // Limpiar productos existentes
-                    document.querySelectorAll('.productos-dinamicos').forEach(container => {
-                        container.innerHTML = '';
-                    });
 
-                    // Agrupar detalles por especialidad
-                    const detallesPorEspecialidad = {};
-                    data.detalles.forEach(detalle => {
-                        if (detalle.producto && detalle.producto.medical_specialties && detalle.producto.medical_specialties.length > 0) {
-                            const especialidadId = detalle.producto.medical_specialties[0].id;
-                            if (!detallesPorEspecialidad[especialidadId]) {
-                                detallesPorEspecialidad[especialidadId] = [];
-                            }
-                            detallesPorEspecialidad[especialidadId].push(detalle);
-                        }
-                    });
+                    if (data.success) {
+                        // Limpiar configuración actual
+                        document.querySelectorAll('.productos-dinamicos').forEach(div => {
+                            div.innerHTML = '';
+                        });
 
-                    // Cargar productos por especialidad
-                    Object.entries(detallesPorEspecialidad).forEach(([especialidadId, detalles]) => {
-                        const contenedor = document.querySelector(`.productos-dinamicos[data-especialidad-id="${especialidadId}"]`);
-                        if (contenedor) {
-                            detalles.forEach(detalle => {
-                                const nuevoProducto = crearProductoTemplate(especialidadId);
+                        // Cargar productos por especialidad
+                        data.detalles.forEach(detalle => {
+                            const contenedor = document.querySelector(`.productos-dinamicos[data-especialidad-id="${detalle.especialidad_id}"]`);
+                            if (contenedor) {
+                                const nuevoProducto = crearProductoTemplate(detalle.especialidad_id);
                                 contenedor.appendChild(nuevoProducto);
-
-                                // Seleccionar el producto y establecer la cantidad
-                                const select = nuevoProducto.querySelector('.producto-select');
-                                const cantidadInput = nuevoProducto.querySelector('.cantidad-input');
                                 
-                                if (select) {
-                                    select.value = detalle.producto_id;
-                                }
-                                if (cantidadInput) {
-                                    cantidadInput.value = detalle.cantidad_por_doctor;
-                                }
-                            });
-                        }
-                    });
+                                const select = nuevoProducto.querySelector('.producto-select');
+                                const cantidad = nuevoProducto.querySelector('.cantidad-input');
+                                
+                                select.value = detalle.producto_id;
+                                cantidad.value = detalle.cantidad_por_doctor;
+                            }
+                        });
 
-                    // Mostrar paso 2
-                    paso1.style.display = 'none';
-                    paso2.style.display = 'block';
-                    
+                        // Actualizar porcentaje hospitalario
+                        document.getElementById('porcentaje_hospitalario').value = data.porcentaje_hospitalario;
+
+                        // Mostrar mensaje de éxito
+                        alert('Configuración cargada exitosamente');
+                    }
                 } catch (error) {
                     console.error('Error:', error);
                     alert('Error al cargar la configuración del ciclo');
