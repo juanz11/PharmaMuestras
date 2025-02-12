@@ -53,7 +53,7 @@
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Objetivo (1-7):
+                                    Objetivo visita diaria (1-7):
                                     <span class="text-xs text-gray-500 ml-1" title="Número de médicos a visitar por día">
                                         <i class="fas fa-info-circle"></i>
                                     </span>
