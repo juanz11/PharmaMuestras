@@ -125,8 +125,8 @@ class CicloExport implements FromCollection, WithStyles, WithTitle, WithEvents
             $cantidadNormal = $detalle->cantidad_total;
             $cantidadHospitalaria = 0;
             
-            if ($this->ciclo->porcentaje_hospitalario > 0) {
-                $cantidadHospitalaria = ceil($cantidadNormal * ($this->ciclo->porcentaje_hospitalario / 100));
+            if ($this->ciclo->porcentaje_hospitalario > 0 && $cantidadNormal > 0) {
+                $cantidadHospitalaria = max(1, round($cantidadNormal * ($this->ciclo->porcentaje_hospitalario / 100)));
             }
             
             $totalRow[$columnIndex] = $cantidadNormal + $cantidadHospitalaria;
@@ -142,7 +142,9 @@ class CicloExport implements FromCollection, WithStyles, WithTitle, WithEvents
             foreach ($this->ciclo->detallesCiclo as $detalle) {
                 $columnIndex = $this->columnMapping["{$detalle->especialidad_id}_{$detalle->producto_id}"];
                 $cantidad = $detalle->cantidad_total;
-                $hospitalRow[$columnIndex] = ceil($cantidad * ($this->ciclo->porcentaje_hospitalario / 100));
+                if ($cantidad > 0) {
+                    $hospitalRow[$columnIndex] = max(1, round($cantidad * ($this->ciclo->porcentaje_hospitalario / 100)));
+                }
             }
 
             $this->data->push($hospitalRow);
