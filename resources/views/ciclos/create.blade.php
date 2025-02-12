@@ -50,6 +50,71 @@
                             </select>
                         </div>
 
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Objetivo (1-7):
+                                    <span class="text-xs text-gray-500 ml-1" title="Número de médicos a visitar por día">
+                                        <i class="fas fa-info-circle"></i>
+                                    </span>
+                                </label>
+                                <input type="number" 
+                                    id="objetivo" 
+                                    name="objetivo" 
+                                    min="1" 
+                                    max="7" 
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                                    required 
+                                    value="1"
+                                    title="Ingrese un número entre 1 y 7">
+                                <div id="objetivo-error" class="text-red-500 text-xs mt-1 hidden">El objetivo debe estar entre 1 y 7</div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Días Hábiles (max 31):
+                                    <span class="text-xs text-gray-500 ml-1" title="Días laborables en el ciclo">
+                                        <i class="fas fa-info-circle"></i>
+                                    </span>
+                                </label>
+                                <input type="number" 
+                                    id="dias_habiles" 
+                                    name="dias_habiles" 
+                                    min="1" 
+                                    max="31" 
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                                    required 
+                                    value="20"
+                                    title="Ingrese un número entre 1 y 31">
+                                <div id="dias-error" class="text-red-500 text-xs mt-1 hidden">Los días hábiles deben estar entre 1 y 31</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Meta Total:
+                                    <span class="text-xs text-gray-500 ml-1" title="Meta base: 20 días * 7 objetivos = 140">
+                                        <i class="fas fa-info-circle"></i>
+                                    </span>
+                                </label>
+                                <span id="meta_total" class="text-sm font-semibold">140 (100%)</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Meta Actual:
+                                    <span class="text-xs text-gray-500 ml-1" title="Calculado como: días hábiles * objetivo">
+                                        <i class="fas fa-info-circle"></i>
+                                    </span>
+                                </label>
+                                <span id="meta_actual" class="text-sm font-semibold">140 (100%)</span>
+                            </div>
+                            <div class="mt-2 relative pt-1">
+                                <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                                    <div id="meta-progress" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Porcentaje Hospitalario:</label>
                             <input type="number" id="porcentaje_hospitalario" name="porcentaje_hospitalario" min="0" max="100" value="0"
@@ -194,6 +259,8 @@
                     const formData = {
                         nombre: nombreCiclo,
                         porcentaje_hospitalario: document.getElementById('porcentaje_hospitalario').value,
+                        objetivo: document.getElementById('objetivo').value,
+                        dias_habiles: document.getElementById('dias_habiles').value,
                         representantes: [],
                         detalles: []
                     };
@@ -274,14 +341,26 @@
                         <option value="{{ $producto->id }}">{{ $producto->name }}</option>
                         @endforeach
                     </select>
-                    <input type="number" class="cantidad-input w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
-                        placeholder="Cantidad" min="1" value="1">
+                    <input type="number" 
+                           class="cantidad-input w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                           placeholder="Cantidad" 
+                           min="1" 
+                           value="1">
                     <button type="button" class="eliminar-producto px-2 py-1 text-white bg-red-500 rounded hover:bg-red-600">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 `;
+
+                const cantidadInput = div.querySelector('.cantidad-input');
+                
+                // Manejar cambios en la cantidad
+                cantidadInput.addEventListener('input', function() {
+                    const valor = parseInt(this.value) || 1;
+                    this.setAttribute('data-cantidad-original', valor);
+                });
+
                 return div;
             }
 
@@ -313,7 +392,14 @@
                         
                         // Seleccionar automáticamente el producto
                         const select = nuevoProducto.querySelector('.producto-select');
+                        const cantidad = nuevoProducto.querySelector('.cantidad-input');
+                        
                         select.value = productoId;
+                        
+                        // Establecer cantidad original
+                        if (!cantidad.hasAttribute('data-cantidad-original')) {
+                            cantidad.setAttribute('data-cantidad-original', cantidad.value);
+                        }
                     } else {
                         // Buscar y eliminar el producto si existe
                         const productos = contenedor.querySelectorAll('.producto-select');
@@ -325,6 +411,52 @@
                     }
                 });
             });
+
+            // Función para calcular el porcentaje y actualizar cantidades
+            function actualizarCantidades() {
+                const objetivo = parseInt(document.getElementById('objetivo').value) || 0;
+                const diasHabiles = parseInt(document.getElementById('dias_habiles').value) || 0;
+                const metaTotal = 140; // 20 días * 7 objetivos
+                const metaActual = objetivo * diasHabiles;
+                
+                // Validación de inputs
+                const objetivoError = document.getElementById('objetivo-error');
+                const diasError = document.getElementById('dias-error');
+                
+                objetivoError.classList.toggle('hidden', objetivo >= 1 && objetivo <= 7);
+                diasError.classList.toggle('hidden', diasHabiles >= 1 && diasHabiles <= 31);
+                
+                // Actualizar metas y barra de progreso
+                const porcentaje = (metaActual / metaTotal) * 100;
+                const porcentajeFormateado = Math.min(Math.round(porcentaje * 10) / 10, 100);
+                
+                document.getElementById('meta_total').textContent = `${metaTotal} (100%)`;
+                document.getElementById('meta_actual').textContent = `${metaActual} (${porcentajeFormateado}%)`;
+                
+                const progressBar = document.getElementById('meta-progress');
+                progressBar.style.width = `${Math.min(porcentajeFormateado, 100)}%`;
+                progressBar.style.backgroundColor = porcentajeFormateado >= 100 ? '#10B981' : '#3B82F6';
+                
+                // Actualizar cantidades de productos
+                document.querySelectorAll('.cantidad-input').forEach(input => {
+                    const cantidadOriginal = parseInt(input.getAttribute('data-cantidad-original')) || parseInt(input.value) || 1;
+                    if (!input.hasAttribute('data-cantidad-original')) {
+                        input.setAttribute('data-cantidad-original', cantidadOriginal);
+                    }
+                    const nuevaCantidad = Math.max(1, Math.round(cantidadOriginal * (porcentaje / 100)));
+                    input.value = nuevaCantidad;
+                    
+                    // Resaltar cambios en las cantidades
+                    const esReduccion = nuevaCantidad < cantidadOriginal;
+                    input.classList.remove('bg-yellow-50', 'bg-red-50');
+                    input.classList.add(esReduccion ? 'bg-red-50' : 'bg-yellow-50');
+                    setTimeout(() => input.classList.remove('bg-yellow-50', 'bg-red-50'), 500);
+                });
+            }
+
+            // Agregar event listeners para los campos de objetivo y días hábiles
+            document.getElementById('objetivo').addEventListener('input', actualizarCantidades);
+            document.getElementById('dias_habiles').addEventListener('input', actualizarCantidades);
 
             // Función para cargar configuración de ciclo anterior
             btnCargarCiclo.addEventListener('click', async function() {
@@ -351,6 +483,7 @@
                                 const nuevoProducto = crearProductoTemplate(detalle.especialidad_id);
                                 contenedor.appendChild(nuevoProducto);
                                 
+                                // Seleccionar automáticamente el producto
                                 const select = nuevoProducto.querySelector('.producto-select');
                                 const cantidad = nuevoProducto.querySelector('.cantidad-input');
                                 
@@ -368,6 +501,13 @@
                         if (numeroCiclo && numeroCiclo[1]) {
                             document.getElementById('nombre_ciclo').value = `Ciclo ${numeroCiclo[1]}`;
                         }
+
+                        // Actualizar objetivo y días hábiles
+                        document.getElementById('objetivo').value = data.objetivo;
+                        document.getElementById('dias_habiles').value = data.dias_habiles;
+
+                        // Actualizar cantidades según objetivo y días
+                        actualizarCantidades();
 
                         // Mostrar mensaje de éxito
                         alert('Configuración cargada exitosamente');
