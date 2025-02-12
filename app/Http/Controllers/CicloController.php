@@ -25,15 +25,11 @@ class CicloController extends Controller
 
     public function create()
     {
-        $representantes = Representative::with(['doctors' => function($query) {
-            $query->select('id', 'representative_id', 'medical_specialty_id', 'doctors_count');
-        }, 'doctors.medicalSpecialty'])->get();
-
+        $representantes = Representative::with(['doctors.medicalSpecialty.products'])->get();
+        $especialidades = MedicalSpecialty::with('products')->get();
         $ciclosAnteriores = Ciclo::orderBy('created_at', 'desc')
             ->with(['detallesCiclo.producto.medicalSpecialties'])
             ->get();
-        
-        $especialidades = MedicalSpecialty::with('products')->get();
         $productos = Product::all();
         
         return view('ciclos.create', compact('representantes', 'especialidades', 'productos', 'ciclosAnteriores'));
@@ -66,12 +62,14 @@ class CicloController extends Controller
                 'representantes' => 'required|array|min:1',
                 'porcentaje_hospitalario' => 'required|numeric|min:0|max:100',
                 'detalles' => 'required|array|min:1',
+                'nombre' => 'required|string'
             ]);
 
             $ciclo = Ciclo::create([
                 'fecha_inicio' => now(),
                 'fecha_fin' => null,
-                'porcentaje_hospitalario' => $request->porcentaje_hospitalario
+                'porcentaje_hospitalario' => $request->porcentaje_hospitalario,
+                'nombre' => $request->nombre
             ]);
 
             foreach ($request->detalles as $detalle) {
@@ -102,11 +100,17 @@ class CicloController extends Controller
             }
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Ciclo creado exitosamente']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Ciclo creado exitosamente'
+            ]);
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error al crear ciclo: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Error al crear el ciclo: ' . $e->getMessage()], 422);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el ciclo: ' . $e->getMessage()
+            ], 422);
         }
     }
 
@@ -304,6 +308,7 @@ class CicloController extends Controller
             // Actualizar ciclo
             $ciclo->update([
                 'porcentaje_hospitalario' => $request->porcentaje_hospitalario,
+                'nombre' => $request->nombre
             ]);
 
             // Eliminar todos los detalles existentes

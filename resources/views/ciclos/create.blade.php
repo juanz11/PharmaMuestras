@@ -22,12 +22,13 @@
                                     <select id="cicloPrevio" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                                         <option value="">Seleccionar ciclo anterior...</option>
                                         @foreach($ciclosAnteriores as $ciclo)
-                                            <option value="{{ $ciclo->id }}">
-                                                Ciclo {{ $ciclo->id }} ({{ $ciclo->fecha_inicio->format('d/m/Y') }})
-                                            </option>
+                                            <option value="{{ $ciclo->id }}">Ciclo {{ $ciclo->id }} - {{ $ciclo->created_at->format('d/m/Y') }}</option>
                                         @endforeach
                                     </select>
-                                    <button type="button" id="cargarCiclo" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                    <button type="button" 
+                                        id="cargarConfiguracion"
+                                        class="px-3 py-1 text-sm text-white rounded"
+                                        style="background-color: #0d6efd !important;">
                                         Cargar Configuración
                                     </button>
                                 </div>
@@ -63,51 +64,60 @@
                     </div>
 
                     <div class="mb-8" id="paso2" style="display: none;">
-                        <h3 class="text-lg font-semibold mb-4">Paso 2: Configurar Productos por Especialidad</h3>
+                        <h3 class="text-lg font-semibold mb-4">Configuración de Productos</h3>
+                        
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700">Porcentaje Hospitalario (%)</label>
-                            <input type="number" id="porcentaje_hospitalario" name="porcentaje_hospitalario" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" value="0" min="0" max="100">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Ciclo:</label>
+                            <select id="nombre_ciclo" name="nombre_ciclo" class="w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                                <option value="">Seleccionar número...</option>
+                                @for ($i = 1; $i <= 12; $i++)
+                                    <option value="Ciclo {{ $i }}">Ciclo {{ $i }}</option>
+                                @endfor
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Porcentaje Hospitalario:</label>
+                            <input type="number" id="porcentaje_hospitalario" name="porcentaje_hospitalario" min="0" max="100" value="0"
+                                class="w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         </div>
                         
                         <div id="especialidades-config">
                             @foreach($especialidades as $especialidad)
-                            <div class="border p-4 rounded mb-4">
-                                <h4 class="font-semibold mb-2">{{ $especialidad->name }}</h4>
-                                <div class="space-y-4">
-                                    <!-- Productos Recomendados -->
-                                    @if($especialidad->products->isNotEmpty())
-                                    <div class="bg-gray-50 p-3 rounded">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Productos Recomendados para esta Especialidad</label>
-                                        <div class="space-y-2">
-                                            @foreach($especialidad->products as $producto)
-                                            <div class="flex items-center space-x-2">
-                                                <input type="checkbox" 
-                                                    class="producto-recomendado form-checkbox h-4 w-4 text-blue-600"
-                                                    data-especialidad-id="{{ $especialidad->id }}"
-                                                    data-producto-id="{{ $producto->id }}"
-                                                    data-producto-nombre="{{ $producto->name }}">
-                                                <span>{{ $producto->name }}</span>
+                                <div class="border p-4 rounded mb-4">
+                                    <h4 class="font-semibold mb-2">{{ $especialidad->name }}</h4>
+                                    <div class="space-y-4">
+                                        <!-- Productos Recomendados -->
+                                        <div class="mb-4">
+                                            <h5 class="text-sm font-medium text-gray-700 mb-2">Productos Recomendados para esta Especialidad</h5>
+                                            @if($especialidad->products->isNotEmpty())
+                                                <div class="bg-gray-50 p-3 rounded mb-4">
+                                                    <div class="space-y-2">
+                                                        @foreach($especialidad->products as $producto)
+                                                            <div class="flex items-center space-x-2">
+                                                                <input type="checkbox" 
+                                                                    class="producto-recomendado form-checkbox h-4 w-4 text-blue-600"
+                                                                    data-especialidad-id="{{ $especialidad->id }}"
+                                                                    data-producto-id="{{ $producto->id }}"
+                                                                    data-producto-nombre="{{ $producto->name }}">
+                                                                <span>{{ $producto->name }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
+                                            <div class="productos-dinamicos" data-especialidad-id="{{ $especialidad->id }}">
+                                                <!-- Los productos se agregarán dinámicamente aquí -->
                                             </div>
-                                            @endforeach
+                                            <button type="button" 
+                                                class="agregar-producto mt-2 px-3 py-1 text-sm text-white rounded"
+                                                style="background-color: #0d6efd !important;"
+                                                data-especialidad-id="{{ $especialidad->id }}">
+                                                + Agregar Producto
+                                            </button>
                                         </div>
-                                    </div>
-                                    @endif
-
-                                    <!-- Agregar Productos -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Agregar Productos</label>
-                                        <div class="productos-dinamicos" data-especialidad-id="{{ $especialidad->id }}">
-                                            <!-- Aquí se agregarán dinámicamente los productos -->
-                                        </div>
-                                        <button type="button" 
-                                            class="agregar-producto mt-2 px-3 py-1 text-sm text-white rounded"
-                                            style="background-color: #0d6efd !important;"
-                                            data-especialidad-id="{{ $especialidad->id }}">
-                                            + Agregar Producto
-                                        </button>
                                     </div>
                                 </div>
-                            </div>
                             @endforeach
                         </div>
                     </div>
@@ -145,7 +155,7 @@
             const btnSiguiente = document.getElementById('siguiente');
             const btnConfirmar = document.getElementById('confirmar');
             const btnSeleccionarTodos = document.getElementById('seleccionarTodos');
-            const btnCargarCiclo = document.getElementById('cargarCiclo');
+            const btnCargarCiclo = document.getElementById('cargarConfiguracion');
             const selectCicloPrevio = document.getElementById('cicloPrevio');
 
             // Evento para Seleccionar Todos
@@ -181,15 +191,25 @@
                 e.preventDefault();
                 
                 try {
+                    // Validar que se haya seleccionado un nombre de ciclo
+                    const nombreCiclo = document.getElementById('nombre_ciclo').value;
+                    if (!nombreCiclo) {
+                        alert('Por favor, seleccione un nombre de ciclo');
+                        return;
+                    }
+
                     // Recopilar datos del formulario
                     const formData = {
-                        representantes: [],
+                        nombre: nombreCiclo,
                         porcentaje_hospitalario: document.getElementById('porcentaje_hospitalario').value,
+                        representantes: [],
                         detalles: []
                     };
 
                     // Obtener representantes seleccionados
+                    const representantesSeleccionados = [];
                     document.querySelectorAll('input[name="representantes[]"]:checked').forEach(rep => {
+                        representantesSeleccionados.push(rep.value);
                         formData.representantes.push(rep.value);
                     });
 
@@ -208,7 +228,7 @@
                             
                             if (productoSelect.value && cantidadInput.value) {
                                 // Crear un detalle para cada representante seleccionado
-                                formData.representantes.forEach(representanteId => {
+                                representantesSeleccionados.forEach(representanteId => {
                                     formData.detalles.push({
                                         representante_id: representanteId,
                                         especialidad_id: especialidadId,
@@ -226,26 +246,19 @@
                         return;
                     }
 
-                    // Obtener el token CSRF directamente del formulario
-                    const token = document.querySelector('input[name="_token"]').value;
+                    const token = document.querySelector('meta[name="csrf-token"]').content;
                     
                     const response = await fetch('{{ route('ciclos.store') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': token,
-                            'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json'
                         },
-                        credentials: 'same-origin',
                         body: JSON.stringify(formData)
                     });
 
                     const data = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(data.message || 'Error al crear el ciclo');
-                    }
 
                     if (data.success) {
                         window.location.href = '{{ route('ciclos.index') }}';
@@ -254,7 +267,7 @@
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    alert(error.message || 'Hubo un error al crear el ciclo. Por favor, intente nuevamente.');
+                    alert(error.message || 'Error al guardar el ciclo');
                 }
             });
 
@@ -300,8 +313,7 @@
                 checkbox.addEventListener('change', function() {
                     const especialidadId = this.dataset.especialidadId;
                     const productoId = this.dataset.productoId;
-                    const productoNombre = this.dataset.productoNombre;
-                    const contenedor = document.querySelector(`.productos-dinamicos[data-especialidad-id="${especialidadId}"]`);
+                    const contenedor = this.closest('.border').querySelector(`.productos-dinamicos[data-especialidad-id="${especialidadId}"]`);
 
                     if (this.checked) {
                         const nuevoProducto = crearProductoTemplate(especialidadId);
@@ -310,7 +322,6 @@
                         // Seleccionar automáticamente el producto
                         const select = nuevoProducto.querySelector('.producto-select');
                         select.value = productoId;
-                        select.disabled = true;
                     } else {
                         // Buscar y eliminar el producto si existe
                         const productos = contenedor.querySelectorAll('.producto-select');
