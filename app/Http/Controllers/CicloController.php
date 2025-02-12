@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Exports\CicloExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Validation\ValidationException;
 
 class CicloController extends Controller
 {
@@ -141,6 +142,12 @@ class CicloController extends Controller
             ->get()
             ->groupBy('representante_id');
 
+        // Obtener los números de descargo por representante
+        $descargos = $ciclo->descargos()
+            ->with('representante')
+            ->get()
+            ->keyBy('representante_id');
+
         // Calcular totales por producto
         $totalesPorProducto = $ciclo->detallesCiclo()
             ->with(['producto', 'especialidad'])
@@ -155,7 +162,7 @@ class CicloController extends Controller
                 ];
             });
 
-        return view('ciclos.show', compact('ciclo', 'detallesPorRepresentante', 'totalesPorProducto'));
+        return view('ciclos.show', compact('ciclo', 'detallesPorRepresentante', 'totalesPorProducto', 'descargos'));
     }
 
     public function generatePdf(Ciclo $ciclo)
@@ -176,7 +183,8 @@ class CicloController extends Controller
         $ciclo->load([
             'detalles.producto.medicalSpecialties',
             'detalles.representante',
-            'detalles.especialidad'
+            'detalles.especialidad',
+            'descargos'
         ]);
         
         $pdf = Pdf::loadView('ciclos.invoice', compact('ciclo'));
@@ -186,111 +194,94 @@ class CicloController extends Controller
     public function deliver(Request $request, Ciclo $ciclo)
     {
         if ($ciclo->status !== 'pendiente') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se pueden entregar ciclos en estado pendiente.'
+            ], 422);
+        }
+
+        try {
+            $request->validate([
+                'descargos' => 'required|array',
+                'descargos.*.representante_id' => 'required|exists:representatives,id',
+                'descargos.*.numero_descargo' => 'required|string|max:255'
+            ]);
+
+            DB::beginTransaction();
+            
+            // Guardar o actualizar los números de descargo por representante
+            foreach ($request->descargos as $descargo) {
+                $ciclo->descargos()->updateOrCreate(
+                    [
+                        'ciclo_id' => $ciclo->id,
+                        'representante_id' => $descargo['representante_id']
+                    ],
+                    [
+                        'numero_descargo' => $descargo['numero_descargo']
+                    ]
+                );
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'Número de descargo registrado exitosamente.'
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación: ' . implode(', ', $e->errors())
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error al registrar descargo: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al registrar el número de descargo: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function completarEntrega(Request $request, Ciclo $ciclo)
+    {
+        if ($ciclo->status !== 'pendiente') {
             return back()->with('error', 'Solo se pueden entregar ciclos en estado pendiente.');
         }
 
-        $request->validate([
-            'numero_descargo' => 'required|string|max:255'
-        ]);
+        // Verificar que todos los representantes tengan número de descargo
+        $representantesConDescargo = $ciclo->descargos()->pluck('representante_id')->unique();
+        $totalRepresentantes = $ciclo->detallesCiclo()
+            ->select('representante_id')
+            ->distinct()
+            ->pluck('representante_id');
+
+        if ($representantesConDescargo->count() !== $totalRepresentantes->count()) {
+            return back()->with('error', 'Todos los representantes deben tener un número de descargo antes de completar la entrega.');
+        }
 
         try {
             DB::beginTransaction();
-            
-            // Verificar stock disponible
-            $faltantes = [];
-            foreach ($ciclo->detallesCiclo as $detalle) {
-                $producto = $detalle->producto;
-                if ($producto->quantity < $detalle->cantidad_con_porcentaje) {
-                    $faltantes[] = [
-                        'producto' => $producto->name,
-                        'requerido' => $detalle->cantidad_con_porcentaje,
-                        'disponible' => $producto->quantity
-                    ];
-                }
-            }
 
-            // Si hay faltantes, mostrar error
-            if (!empty($faltantes)) {
-                DB::rollBack();
-                $mensaje = "<div class='space-y-4'>";
-                $mensaje .= "<p class='font-semibold text-lg'>Los siguientes productos no tienen suficiente stock:</p>";
-                $mensaje .= "<div class='space-y-2'>";
-                
-                foreach ($faltantes as $faltante) {
-                    $mensaje .= "<div class='faltante-item'>";
-                    $mensaje .= "<p class='font-medium'>{$faltante['producto']}</p>";
-                    $mensaje .= "<div class='ml-4'>";
-                    $mensaje .= "<p>Requerido: <span class='font-semibold'>{$faltante['requerido']}</span></p>";
-                    $mensaje .= "<p>Disponible: <span class='font-semibold'>{$faltante['disponible']}</span></p>";
-                    $mensaje .= "</div>";
-                    $mensaje .= "</div>";
-                }
-                
-                $mensaje .= "</div></div>";
-                return back()->with('error', $mensaje);
-            }
-
-            // Reducir stock
-            foreach ($ciclo->detallesCiclo as $detalle) {
-                $producto = $detalle->producto;
-                $producto->quantity -= $detalle->cantidad_con_porcentaje;
-                $producto->save();
-            }
-
-            // Actualizar estado del ciclo y número de descargo
-            $ciclo->status = 'entregado';
-            $ciclo->numero_descargo = $request->numero_descargo;
-            $ciclo->delivered_at = now();
-            $ciclo->save();
+            $ciclo->update([
+                'status' => 'entregado',
+                'delivered_at' => now()
+            ]);
 
             DB::commit();
-            return redirect()->route('ciclos.show', $ciclo)->with('success', 'Ciclo entregado exitosamente.');
-
+            return back()->with('success', 'Ciclo marcado como entregado exitosamente.');
         } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Error al procesar la entrega: ' . $e->getMessage());
+            DB::rollback();
+            Log::error('Error al completar entrega: ' . $e->getMessage());
+            return back()->with('error', 'Error al completar la entrega: ' . $e->getMessage());
         }
     }
 
     public function updateDescargo(Request $request, Ciclo $ciclo)
     {
-        \Log::info('Actualizando número de descargo', [
-            'ciclo_id' => $ciclo->id,
-            'numero_descargo_actual' => $ciclo->numero_descargo,
-            'numero_descargo_nuevo' => $request->numero_descargo
-        ]);
-
-        $request->validate([
-            'numero_descargo' => 'required|string|max:255'
-        ]);
-
-        if ($ciclo->status !== 'pendiente') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Solo se puede actualizar el número de descargo en ciclos pendientes'
-            ], 422);
-        }
-
-        try {
-            $ciclo->numero_descargo = $request->numero_descargo;
-            $ciclo->save();
-
-            \Log::info('Número de descargo actualizado', [
-                'ciclo_id' => $ciclo->id,
-                'numero_descargo' => $ciclo->numero_descargo
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Número de descargo actualizado exitosamente'
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error al actualizar número de descargo: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar el número de descargo'
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Esta funcionalidad ha sido reemplazada por el registro de descargos por representante.'
+        ], 422);
     }
 
     public function generarReporte(Ciclo $ciclo)

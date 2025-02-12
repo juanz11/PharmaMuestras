@@ -14,7 +14,6 @@ class Ciclo extends Model
         'status',
         'delivered_at',
         'porcentaje_hospitalario',
-        'numero_descargo',
         'nombre'
     ];
 
@@ -24,7 +23,7 @@ class Ciclo extends Model
         'delivered_at' => 'datetime',
     ];
 
-    public function detallesCiclo(): HasMany
+    public function detallesCiclo()
     {
         return $this->hasMany(DetalleCiclo::class);
     }
@@ -32,6 +31,11 @@ class Ciclo extends Model
     public function detalles(): HasMany
     {
         return $this->hasMany(DetalleCiclo::class);
+    }
+
+    public function descargos()
+    {
+        return $this->hasMany(CicloDescargo::class);
     }
 
     public function getRepresentativesWithProducts()

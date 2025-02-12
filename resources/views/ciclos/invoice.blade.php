@@ -112,6 +112,19 @@
             </table>
         </div>
 
+        <div class="mb-4">
+            <div class="flex justify-between">
+                <div>
+                    <p class="font-bold">{{ $representative->name }}</p>
+                    <p>Representante</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-bold">N° Descargo: {{ optional($ciclo->descargos->where('representante_id', $representative->id)->first())->numero_descargo ?? 'No especificado' }}</p>
+                    <p>{{ now()->format('d/m/Y') }}</p>
+                </div>
+            </div>
+        </div>
+
         <div class="invoice-info">
             <table>
                 <tr>
@@ -121,8 +134,6 @@
                     <td>{{ $ciclo->fecha_inicio->format('d/m/Y') }}</td>
                 </tr>
                 <tr>
-                    <td><strong>N° Descargo:</strong></td>
-                    <td>{{ $ciclo->numero_descargo ?: 'No especificado' }}</td>
                     <td><strong>Hospitalario:</strong></td>
                     <td>{{ $ciclo->porcentaje_hospitalario }}%</td>
                 </tr>

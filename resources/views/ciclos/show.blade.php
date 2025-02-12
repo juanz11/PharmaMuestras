@@ -6,20 +6,13 @@
             </h2>
             <div class="flex space-x-4 items-center">
                 @if($ciclo->status === 'pendiente')
-                <form action="{{ route('ciclos.deliver', $ciclo) }}" method="POST" class="inline" id="deliverForm">
-                    @csrf
-                    @method('PUT')
-                    <div class="flex items-center">
-                        <input type="text" 
-                               name="numero_descargo"
-                               class="border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mr-2" 
-                               placeholder="Ingrese # de descargo"
-                               required>
+                    <form action="{{ route('ciclos.completar-entrega', $ciclo) }}" method="POST" class="inline">
+                        @csrf
+                        @method('PUT')
                         <button type="submit" class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important;">
                             Efectuar Entrega
                         </button>
-                    </div>
-                </form>
+                    </form>
                 @endif
                 <div>
                     <a href="{{ route('ciclos.pdf', $ciclo) }}" class="text-white font-bold py-2 px-4 rounded inline-block" style="background-color: #dc3545 !important;">
@@ -88,12 +81,6 @@
                             <p class="text-sm text-gray-600">Porcentaje Hospitalario</p>
                             <p class="font-medium">{{ $ciclo->porcentaje_hospitalario }}%</p>
                         </div>
-                        @if($ciclo->status !== 'pendiente')
-                        <div>
-                            <p class="text-sm text-gray-600">Número de Descargo</p>
-                            <p class="font-medium">{{ $ciclo->numero_descargo ?? 'No especificado' }}</p>
-                        </div>
-                        @endif
                     </div>
                 </div>
 
@@ -102,22 +89,49 @@
                     <h3 class="text-lg font-semibold mb-4">Detalles por Representante</h3>
                     <div class="space-y-6">
                         @foreach($detallesPorRepresentante as $representanteId => $detalles)
-                            <div class="border rounded-lg p-4">
-                                <h4 class="font-semibold text-lg mb-2">{{ $detalles->first()->representante->name }}</h4>
-                                <p class="text-sm text-gray-600 mb-4">
-                                    Total de doctores: {{ $detalles->first()->representante->doctors->sum('doctors_count') }}
-                                </p>
-                                
-                                @php
-                                    $productos = $detalles->groupBy('producto_id');
-                                    $especialidades = \App\Models\MedicalSpecialty::whereIn('id', $detalles->pluck('especialidad_id')->unique())->get();
-                                @endphp
-
+                            @php
+                                $representante = $detalles->first()->representante;
+                                $descargo = isset($descargos[$representanteId]) ? $descargos[$representanteId] : null;
+                            @endphp
+                            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-sm text-gray-600">Estado</p>
+                                        <p class="font-medium">{{ ucfirst($ciclo->status) }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600">Fecha de Entrega</p>
+                                        <p class="font-medium">{{ $ciclo->delivered_at ? $ciclo->delivered_at->format('d/m/Y H:i') : 'No entregado' }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-semibold">{{ $representante->name }}</h3>
+                                    @if($ciclo->status === 'pendiente')
+                                        <div class="flex items-center space-x-2">
+                                            <button type="button" 
+                                                onclick="mostrarModalDescargo('{{ $representante->id }}', '{{ $representante->name }}', '{{ $descargo ? $descargo->numero_descargo : '' }}')"
+                                                class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important;">
+                                                Registrar Descargo
+                                            </button>
+                                            @if($descargo)
+                                                <span class="text-sm text-gray-600">(#{{ $descargo->numero_descargo }})</span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="text-sm">
+                                            <span class="font-medium">Número de Descargo:</span>
+                                            <span class="ml-2">{{ $descargo ? $descargo->numero_descargo : 'No registrado' }}</span>
+                                        </div>
+                                    @endif
+                                </div>
                                 <div class="overflow-x-auto">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead>
                                             <tr>
                                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                                                @php
+                                                    $especialidades = \App\Models\MedicalSpecialty::whereIn('id', $detalles->pluck('especialidad_id')->unique())->get();
+                                                @endphp
                                                 @foreach($especialidades as $especialidad)
                                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                         {{ $especialidad->name }}
@@ -131,6 +145,9 @@
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
+                                            @php
+                                                $productos = $detalles->groupBy('producto_id');
+                                            @endphp
                                             @foreach($productos as $productoId => $productoDetalles)
                                                 @php
                                                     $producto = \App\Models\Product::find($productoId);
@@ -333,6 +350,108 @@
         </div>
     </div>
 </x-app-layout>
+
+@if($ciclo->status === 'pendiente')
+    <!-- Modal para registrar número de descargo -->
+    <div id="modalDescargo" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" style="z-index: 50;">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Registrar Número de Descargo</h3>
+                <form id="formDescargo" method="POST" action="{{ route('ciclos.deliver', $ciclo) }}">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="descargos[0][representante_id]" id="representante_id">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Representante</label>
+                        <p id="nombreRepresentante" class="text-gray-900"></p>
+                        <p id="numeroActual" class="text-sm text-gray-600 mt-1"></p>
+                    </div>
+                    <div class="mb-4">
+                        <label for="numero_descargo" class="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Descargo
+                        </label>
+                        <input type="text" 
+                            name="descargos[0][numero_descargo]" 
+                            id="numero_descargo" 
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                            required>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" 
+                            onclick="cerrarModalDescargo()"
+                            class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                            Cancelar
+                        </button>
+                        <button type="submit" 
+                            class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important;">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function mostrarModalDescargo(representanteId, nombreRepresentante, numeroDescargo) {
+            document.getElementById('modalDescargo').classList.remove('hidden');
+            document.getElementById('representante_id').value = representanteId;
+            document.getElementById('nombreRepresentante').textContent = nombreRepresentante;
+            
+            // Mostrar el número actual si existe
+            const numeroActualElement = document.getElementById('numeroActual');
+            if (numeroDescargo) {
+                numeroActualElement.textContent = 'Número actual: ' + numeroDescargo;
+                document.getElementById('numero_descargo').value = numeroDescargo;
+            } else {
+                numeroActualElement.textContent = 'Sin número de descargo registrado';
+                document.getElementById('numero_descargo').value = '';
+            }
+        }
+
+        function cerrarModalDescargo() {
+            document.getElementById('modalDescargo').classList.add('hidden');
+            document.getElementById('numero_descargo').value = '';
+        }
+
+        // Asegurarse de que el formulario use el método PUT
+        document.getElementById('formDescargo').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const formData = new FormData(form);
+            
+            // Formatear los datos correctamente
+            const data = {
+                descargos: [{
+                    representante_id: formData.get('descargos[0][representante_id]'),
+                    numero_descargo: formData.get('descargos[0][numero_descargo]')
+                }]
+            };
+            
+            fetch(form.action, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Error al guardar el número de descargo');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al guardar el número de descargo');
+            });
+        });
+    </script>
+@endif
 
 @push('scripts')
 <script>
