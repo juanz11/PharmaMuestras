@@ -46,34 +46,51 @@
             padding: 6px 2px;
         }
         .resumen-total-table {
-            margin-top: 20px;
-            page-break-before: auto;
+            margin-top: 10px;
             page-break-inside: avoid;
+            font-size: 8px;
+            width: 100%;
+            table-layout: fixed;
+            margin-left: auto;
+            margin-right: auto;
         }
         .resumen-total-table th,
         .resumen-total-table td {
-            padding: 6px 2px;
+            text-align: center;
+            padding: 3px 2px;
+            white-space: normal;
+            word-wrap: break-word;
+            vertical-align: middle;
+            height: auto;
+            min-width: 35px;
+        }
+        .resumen-total-table .specialty-header {
             font-size: 9px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid #dee2e6;
+            padding: 3px 1px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .resumen-total-table .product-header {
+            font-size: 8px;
+            padding: 2px 1px;
+            white-space: normal;
+            word-wrap: break-word;
+            height: auto;
         }
         .resumen-total-table .representante-column {
-            width: 15%;
-            min-width: 100px;
+            width: 100px;
+            text-align: left;
+            padding-left: 5px;
         }
-        .header {
+        .resumen-total-table .specialty-group {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 5px;
         }
-        .header h1 {
-            color: #2c3e50;
-            margin: 0;
-            font-size: 24px;
-            text-transform: uppercase;
-        }
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
+        .resumen-total-table .number-column {
+            width: 25px;
+            text-align: center;
         }
         .total-row {
             background-color: #f8f9fa;
@@ -110,6 +127,10 @@
             color: #666;
             padding: 10px 0;
             border-top: 1px solid #dee2e6;
+        }
+        @page {
+            size: legal landscape;
+            margin: 5px;
         }
     </style>
 </head>
@@ -214,7 +235,7 @@
     @endforeach
 
     <!-- Resumen Total -->
-    <div style="page-break-before: always;">
+    <div class="resumen-total-section">
         <div class="header">
             <h2 style="margin: 15px 0; font-size: 24px; text-align: center;">RESUMEN TOTAL - CICLO {{ $numeroRomano }}</h2>
         </div>
@@ -234,10 +255,7 @@
                 <tr>
                     <th class="representante-column">Representante</th>
                     @foreach($especialidades as $especialidad)
-                        @php
-                            $numProductos = $productosPorEspecialidad->get($especialidad->id, collect())->count();
-                        @endphp
-                        <th colspan="{{ $numProductos }}" class="specialty-header">
+                        <th class="specialty-header" colspan="{{ $productosPorEspecialidad->get($especialidad->id, collect())->count() }}">
                             {{ $especialidad->name }}
                         </th>
                     @endforeach
@@ -249,9 +267,7 @@
                             @php
                                 $producto = \App\Models\Product::find($productoId);
                             @endphp
-                            <th class="product-header" style="width: {{ 85 / collect($productosPorEspecialidad)->flatten()->count() }}%">
-                                {{ $producto ? $producto->name : 'Producto eliminado' }}
-                            </th>
+                            <th class="product-header">{{ $producto ? $producto->name : 'Producto eliminado' }}</th>
                         @endforeach
                     @endforeach
                 </tr>
@@ -259,7 +275,7 @@
             <tbody>
                 @foreach($detallesPorRepresentante as $representanteId => $detalles)
                     <tr>
-                        <td>{{ $detalles->first()->representante->name }}</td>
+                        <td>{{ App\Models\Representative::find($representanteId)->name }}</td>
                         @foreach($especialidades as $especialidad)
                             @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
                                 @php
@@ -378,13 +394,13 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Representante</th>
-                    <th>Producto</th>
-                    <th>Especialidad</th>
-                    <th class="text-center">Regular</th>
-                    <th class="text-center">Hosp.</th>
-                    <th class="text-center">Valor</th>
-                    <th class="text-center">Total</th>
+                    <th class="representante-column">Representante</th>
+                    <th class="producto-column">Producto</th>
+                    <th class="producto-column">Especialidad</th>
+                    <th class="cantidad-column">Regular</th>
+                    <th class="cantidad-column">Hosp.</th>
+                    <th class="valor-column">Valor</th>
+                    <th class="valor-column">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -416,7 +432,7 @@
                             $subtotal += $total;
                         @endphp
                         <tr>
-                            <td>{{ $representante }}</td>
+                            <td>{{ App\Models\Representative::find($representante)->name }}</td>
                             <td>{{ $detalle->producto ? $detalle->producto->name : 'Producto eliminado' }}</td>
                             <td>{{ $detalle->producto && $detalle->producto->medicalSpecialties->isNotEmpty() ? $detalle->producto->medicalSpecialties->first()->name : 'Sin especialidad' }}</td>
                             <td class="text-center">{{ $cantidadRegular }}</td>
