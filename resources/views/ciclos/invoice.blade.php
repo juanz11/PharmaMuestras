@@ -107,7 +107,7 @@
                     <td><strong>Zona:</strong></td>
                     <td>{{ $representative->zone }}</td>
                     <td><strong>Ciclo:</strong></td>
-                    <td>Ciclo {{ $ciclo->id }}</td>
+                    <td>Ciclo {{ numberToRoman(intval(preg_replace('/[^0-9]/', '', $ciclo->nombre))) }}</td>
                 </tr>
             </table>
         </div>
@@ -115,8 +115,7 @@
         <div class="invoice-info">
             <table>
                 <tr>
-                    <td><strong>Ciclo:</strong></td>
-                    <td>Ciclo {{ $ciclo->id }}</td>
+                 
                     <td><strong>Fecha:</strong></td>
                     <td>{{ $ciclo->fecha_inicio->format('d/m/Y') }}</td>
                 </tr>
@@ -206,5 +205,33 @@
         @endif
     </div>
     @endforeach
+
+    @php
+    function numberToRoman($number) {
+        $map = [
+            'M' => 1000,
+            'CM' => 900,
+            'D' => 500,
+            'CD' => 400,
+            'C' => 100,
+            'XC' => 90,
+            'L' => 50,
+            'XL' => 40,
+            'X' => 10,
+            'IX' => 9,
+            'V' => 5,
+            'IV' => 4,
+            'I' => 1
+        ];
+        $result = '';
+        foreach ($map as $roman => $value) {
+            while ($number >= $value) {
+                $result .= $roman;
+                $number -= $value;
+            }
+        }
+        return $result;
+    }
+    @endphp
 </body>
 </html>
