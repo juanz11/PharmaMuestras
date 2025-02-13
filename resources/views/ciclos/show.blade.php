@@ -187,39 +187,23 @@
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             @php
-                                $especialidades = \App\Models\MedicalSpecialty::whereIn('id', collect($detallesPorRepresentante)->flatten(1)->pluck('especialidad_id')->unique())->get();
-                                $productosPorEspecialidad = collect($detallesPorRepresentante)
+                                // Obtener todos los productos únicos usados en el ciclo
+                                $productos = collect($detallesPorRepresentante)
                                     ->flatten(1)
-                                    ->groupBy('especialidad_id')
-                                    ->map(function($grupo) {
-                                        return $grupo->pluck('producto_id')->unique();
+                                    ->pluck('producto_id')
+                                    ->unique()
+                                    ->map(function($productoId) {
+                                        return \App\Models\Product::find($productoId);
                                     });
                             @endphp
                             <thead>
                                 <tr>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Representante</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zona</th>
-                                    @foreach($especialidades as $especialidad)
-                                        @php
-                                            $numProductos = $productosPorEspecialidad->get($especialidad->id, collect())->count();
-                                        @endphp
-                                        <th colspan="{{ $numProductos }}" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l">
-                                            {{ $especialidad->name }}
+                                    @foreach($productos as $producto)
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-l">
+                                            {{ $producto ? $producto->name : 'Producto eliminado' }}
                                         </th>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    <th class="px-4 py-2"></th>
-                                    <th class="px-4 py-2"></th>
-                                    @foreach($especialidades as $especialidad)
-                                        @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
-                                            @php
-                                                $producto = \App\Models\Product::find($productoId);
-                                            @endphp
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-l">
-                                                {{ $producto ? $producto->name : 'Producto eliminado' }}
-                                            </th>
-                                        @endforeach
                                     @endforeach
                                 </tr>
                             </thead>
@@ -232,63 +216,51 @@
                                         <td class="px-4 py-2 whitespace-nowrap">
                                             {{ $detalles->first()->representante->zone ?? 'Sin zona' }}
                                         </td>
-                                        @foreach($especialidades as $especialidad)
-                                            @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
-                                                @php
-                                                    $detalle = $detalles->first(function($d) use ($especialidad, $productoId) {
-                                                        return $d->especialidad_id == $especialidad->id && $d->producto_id == $productoId;
-                                                    });
-                                                @endphp
-                                                <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                                    {{ $detalle ? round($detalle->cantidad_total) : '-' }}
-                                                </td>
-                                            @endforeach
+                                        @foreach($productos as $producto)
+                                            @php
+                                                $totalProducto = $detalles
+                                                    ->where('producto_id', $producto->id)
+                                                    ->sum('cantidad_total');
+                                            @endphp
+                                            <td class="px-4 py-2 whitespace-nowrap text-center border-l">
+                                                {{ $totalProducto > 0 ? round($totalProducto) : '-' }}
+                                            </td>
                                         @endforeach
                                     </tr>
                                 @endforeach
-                                <!-- Fila de totales -->
+                                <!-- Fila de hospitalario -->
                                 <tr class="bg-gray-100">
                                     <td class="px-4 py-2 whitespace-nowrap">Hospitalario ({{ $ciclo->porcentaje_hospitalario }}%)</td>
                                     <td class="px-4 py-2 whitespace-nowrap"></td>
-                                    @foreach($especialidades as $especialidad)
-                                        @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
-                                            <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                                @php
-                                                    $totalRegular = 0;
-                                                    foreach($detallesPorRepresentante as $detalles) {
-                                                        foreach($detalles as $detalle) {
-                                                            if($detalle->especialidad_id == $especialidad->id && $detalle->producto_id == $productoId) {
-                                                                $totalRegular += $detalle->cantidad_total;
-                                                            }
-                                                        }
-                                                    }
-                                                    $totalHospitalario = $totalRegular * ($ciclo->porcentaje_hospitalario / 100);
-                                                @endphp
-                                                {{ $totalHospitalario > 0 ? round($totalHospitalario) : '-' }}
-                                            </td>
-                                        @endforeach
+                                    @foreach($productos as $producto)
+                                        @php
+                                            $totalProducto = collect($detallesPorRepresentante)
+                                                ->flatten(1)
+                                                ->where('producto_id', $producto->id)
+                                                ->sum('cantidad_total');
+                                            $hospitalario = $totalProducto * ($ciclo->porcentaje_hospitalario / 100);
+                                        @endphp
+                                        <td class="px-4 py-2 whitespace-nowrap text-center border-l">
+                                            {{ $hospitalario > 0 ? round($hospitalario) : '-' }}
+                                        </td>
                                     @endforeach
                                 </tr>
-
+                                <!-- Fila de totales -->
                                 <tr class="bg-gray-50 font-semibold">
                                     <td class="px-4 py-2 whitespace-nowrap">Total</td>
                                     <td class="px-4 py-2 whitespace-nowrap"></td>
-                                    @foreach($especialidades as $especialidad)
-                                        @foreach($productosPorEspecialidad->get($especialidad->id, collect()) as $productoId)
-                                            @php
-                                                $totalRegular = collect($detallesPorRepresentante)
-                                                    ->flatten(1)
-                                                    ->where('especialidad_id', $especialidad->id)
-                                                    ->where('producto_id', $productoId)
-                                                    ->sum('cantidad_total');
-                                                
-                                                $totalHospitalario = $totalRegular * ($ciclo->porcentaje_hospitalario / 100);
-                                                $granTotal = $totalRegular + $totalHospitalario;
-                                            @endphp
-                                            <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                                {{ $granTotal > 0 ? round($granTotal) : '-' }}
-                                            </td>
-                                        @endforeach
+                                    @foreach($productos as $producto)
+                                        @php
+                                            $totalProducto = collect($detallesPorRepresentante)
+                                                ->flatten(1)
+                                                ->where('producto_id', $producto->id)
+                                                ->sum('cantidad_total');
+                                            $hospitalario = $totalProducto * ($ciclo->porcentaje_hospitalario / 100);
+                                            $granTotal = $totalProducto + $hospitalario;
+                                        @endphp
+                                        <td class="px-4 py-2 whitespace-nowrap text-center border-l">
+                                            {{ $granTotal > 0 ? round($granTotal) : '-' }}
+                                        </td>
                                     @endforeach
                                 </tr>
                             </tbody>
