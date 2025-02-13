@@ -262,13 +262,39 @@ class CicloController extends Controller
         try {
             DB::beginTransaction();
 
+            // Agrupar los detalles por producto para calcular totales
+            $totalesPorProducto = $ciclo->detallesCiclo()
+                ->select('producto_id')
+                ->selectRaw('SUM(cantidad_con_porcentaje) as total_cantidad')
+                ->groupBy('producto_id')
+                ->get();
+
+            // Descontar del inventario
+            foreach ($totalesPorProducto as $total) {
+                $producto = Product::findOrFail($total->producto_id);
+                
+                Log::info("Actualizando inventario del producto {$producto->name}:");
+                Log::info("Cantidad actual: {$producto->quantity}");
+                Log::info("Cantidad a descontar: {$total->total_cantidad}");
+
+                if ($producto->quantity < $total->total_cantidad) {
+                    DB::rollback();
+                    return back()->with('error', "No hay suficiente inventario del producto {$producto->name}. Disponible: {$producto->quantity}, Requerido: {$total->total_cantidad}");
+                }
+
+                $producto->quantity -= $total->total_cantidad;
+                $producto->save();
+
+                Log::info("Nueva cantidad: {$producto->quantity}");
+            }
+
             $ciclo->update([
                 'status' => 'entregado',
                 'delivered_at' => now()
             ]);
 
             DB::commit();
-            return back()->with('success', 'Ciclo marcado como entregado exitosamente.');
+            return back()->with('success', 'Ciclo marcado como entregado exitosamente y el inventario ha sido actualizado.');
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error al completar entrega: ' . $e->getMessage());
