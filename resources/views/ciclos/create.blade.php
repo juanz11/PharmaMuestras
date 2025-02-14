@@ -69,7 +69,7 @@
                                     max="7" 
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
                                     required 
-                                    value="1"
+                                    value="7"
                                     title="Ingrese un número entre 1 y 7">
                                 <div id="objetivo-error" class="text-red-500 text-xs mt-1 hidden">El objetivo debe estar entre 1 y 7</div>
                             </div>
