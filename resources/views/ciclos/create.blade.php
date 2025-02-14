@@ -420,8 +420,10 @@
             function actualizarCantidades() {
                 const objetivo = parseInt(document.getElementById('objetivo').value) || 0;
                 const diasHabiles = parseInt(document.getElementById('dias_habiles').value) || 0;
+                const diasMaximos = 20; // Máximo de días efectivos para el cálculo
                 const metaTotal = 140; // 20 días * 7 objetivos
-                const metaActual = objetivo * diasHabiles;
+                const diasCalculados = Math.min(diasHabiles, diasMaximos); // Limitar a 20 días máximo
+                const metaActual = objetivo * diasCalculados;
                 
                 // Validación de inputs
                 const objetivoError = document.getElementById('objetivo-error');
