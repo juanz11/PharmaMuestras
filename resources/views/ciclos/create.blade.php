@@ -45,6 +45,27 @@
                         <h3 class="text-lg font-semibold mb-4">Configuración del Ciclo</h3>
                         
                         <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Cargar configuración desde ciclo anterior</label>
+                            <div class="flex space-x-2">
+                                <select id="año-selector" class="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <option value="">Año</option>
+                                    @foreach($años as $año)
+                                        <option value="{{ $año }}">{{ $año }}</option>
+                                    @endforeach
+                                </select>
+                                <select id="ciclo-selector" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <option value="">Seleccionar ciclo</option>
+                                </select>
+                                <button type="button" 
+                                    id="cargarConfiguracion"
+                                    class="px-3 py-1 text-sm text-white rounded"
+                                    style="background-color: #0d6efd !important;">
+                                    Cargar Configuración
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Ciclo:</label>
                             <select id="nombre_ciclo" name="nombre_ciclo" class="w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
                                 <option value="">Seleccionar número...</option>
@@ -125,24 +146,6 @@
                                 class="w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         </div>
 
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Cargar configuración desde ciclo anterior:</label>
-                            <div class="flex space-x-2">
-                                <select id="cicloPrevio" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                    <option value="">Seleccionar ciclo anterior...</option>
-                                    @foreach($ciclosAnteriores as $ciclo)
-                                        <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }} - {{ $ciclo->created_at->format('d/m/Y') }}</option>
-                                    @endforeach
-                                </select>
-                                <button type="button" 
-                                    id="cargarConfiguracion"
-                                    class="px-3 py-1 text-sm text-white rounded"
-                                    style="background-color: #0d6efd !important;">
-                                    Cargar Configuración
-                                </button>
-                            </div>
-                        </div>
-
                         <div id="especialidades-config">
                             @foreach($especialidades as $especialidad)
                                 <div class="border p-4 rounded mb-4">
@@ -217,7 +220,8 @@
             const btnConfirmar = document.getElementById('confirmar');
             const btnSeleccionarTodos = document.getElementById('seleccionarTodos');
             const btnCargarCiclo = document.getElementById('cargarConfiguracion');
-            const selectCicloPrevio = document.getElementById('cicloPrevio');
+            const selectCicloPrevio = document.getElementById('ciclo-selector');
+            const añoSelector = document.getElementById('año-selector');
 
             // Evento para Seleccionar Todos
             btnSeleccionarTodos.addEventListener('click', function() {
@@ -480,16 +484,41 @@
             document.getElementById('objetivo').addEventListener('input', actualizarCantidades);
             document.getElementById('dias_habiles').addEventListener('input', actualizarCantidades);
 
+            // Evento para cargar ciclos cuando se selecciona un año
+            añoSelector.addEventListener('change', function() {
+                const año = this.value;
+                const cicloSelector = document.getElementById('ciclo-selector');
+                
+                // Limpiar selector de ciclos
+                cicloSelector.innerHTML = '<option value="">Seleccionar ciclo</option>';
+                
+                if (año) {
+                    fetch(`/ciclos/por-año/${año}`)
+                        .then(response => response.json())
+                        .then(ciclos => {
+                            ciclos.forEach(ciclo => {
+                                const option = document.createElement('option');
+                                option.value = ciclo.nombre;
+                                option.textContent = ciclo.nombre;
+                                cicloSelector.appendChild(option);
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error al cargar ciclos:', error);
+                        });
+                }
+            });
+
             // Función para cargar configuración de ciclo anterior
             btnCargarCiclo.addEventListener('click', async function() {
-                const cicloId = selectCicloPrevio.value;
-                if (!cicloId) {
+                const nombreCiclo = selectCicloPrevio.value;
+                if (!nombreCiclo) {
                     alert('Por favor, seleccione un ciclo anterior');
                     return;
                 }
 
                 try {
-                    const response = await fetch(`/ciclos/${cicloId}/configuracion-anterior`);
+                    const response = await fetch(`/ciclos/configuracion/${encodeURIComponent(nombreCiclo)}`);
                     const data = await response.json();
 
                     if (data.success) {
@@ -511,6 +540,7 @@
                                 
                                 select.value = detalle.producto_id;
                                 cantidad.value = detalle.cantidad_por_doctor;
+                                cantidad.setAttribute('data-cantidad-original', detalle.cantidad_por_doctor);
                             }
                         });
 
@@ -518,11 +548,7 @@
                         document.getElementById('porcentaje_hospitalario').value = data.porcentaje_hospitalario;
 
                         // Actualizar nombre del ciclo
-                        const cicloSeleccionado = selectCicloPrevio.options[selectCicloPrevio.selectedIndex];
-                        const numeroCiclo = cicloSeleccionado.textContent.match(/Ciclo (\d+)/);
-                        if (numeroCiclo && numeroCiclo[1]) {
-                            document.getElementById('nombre_ciclo').value = `Ciclo ${numeroCiclo[1]}`;
-                        }
+                        document.getElementById('nombre_ciclo').value = nombreCiclo;
 
                         // Actualizar objetivo y días hábiles
                         document.getElementById('objetivo').value = data.objetivo;
@@ -533,10 +559,12 @@
 
                         // Mostrar mensaje de éxito
                         alert('Configuración cargada exitosamente');
+                    } else {
+                        throw new Error(data.message || 'Error al cargar la configuración');
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('Error al cargar la configuración del ciclo');
+                    alert('Error al cargar la configuración del ciclo: ' + error.message);
                 }
             });
         });

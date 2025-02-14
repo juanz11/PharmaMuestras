@@ -33,7 +33,13 @@ class CicloController extends Controller
             ->get();
         $productos = Product::all();
         
-        return view('ciclos.create', compact('representantes', 'especialidades', 'productos', 'ciclosAnteriores'));
+        // Obtener años únicos de los ciclos
+        $años = Ciclo::selectRaw('YEAR(fecha_inicio) as año')
+                    ->distinct()
+                    ->orderBy('año', 'desc')
+                    ->pluck('año');
+
+        return view('ciclos.create', compact('representantes', 'especialidades', 'productos', 'ciclosAnteriores', 'años'));
     }
 
     public function getConfiguracion(Ciclo $ciclo)
@@ -72,6 +78,48 @@ class CicloController extends Controller
             'porcentaje_hospitalario' => $ciclo->porcentaje_hospitalario,
             'detalles' => $detalles
         ]);
+    }
+
+    public function getConfiguracionPorNombre($nombre)
+    {
+        try {
+            $ciclo = Ciclo::where('nombre', $nombre)
+                         ->with(['detallesCiclo' => function($query) {
+                             $query->select('id', 'ciclo_id', 'especialidad_id', 'producto_id', 'cantidad_por_doctor')
+                                  ->distinct();
+                         }])
+                         ->first();
+
+            if (!$ciclo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ciclo no encontrado'
+                ], 404);
+            }
+
+            $detalles = $ciclo->detallesCiclo->map(function($detalle) {
+                return [
+                    'especialidad_id' => $detalle->especialidad_id,
+                    'producto_id' => $detalle->producto_id,
+                    'cantidad_por_doctor' => $detalle->cantidad_por_doctor
+                ];
+            })->unique(function ($item) {
+                return $item['especialidad_id'] . '-' . $item['producto_id'];
+            })->values();
+
+            return response()->json([
+                'success' => true,
+                'detalles' => $detalles,
+                'porcentaje_hospitalario' => $ciclo->porcentaje_hospitalario,
+                'objetivo' => $ciclo->objetivo,
+                'dias_habiles' => $ciclo->dias_habiles
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener la configuración del ciclo: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function store(Request $request)
@@ -308,6 +356,23 @@ class CicloController extends Controller
             'success' => false,
             'message' => 'Esta funcionalidad ha sido reemplazada por el registro de descargos por representante.'
         ], 422);
+    }
+
+    public function getCiclosPorAño($año)
+    {
+        $ciclos = Ciclo::select('nombre', 'fecha_inicio')
+                      ->whereYear('fecha_inicio', $año)
+                      ->get()
+                      ->unique('nombre')
+                      ->values()
+                      ->sortBy(function($ciclo) {
+                          // Extraer el número del nombre del ciclo (e.j., "Ciclo 7" -> 7)
+                          preg_match('/Ciclo (\d+)/', $ciclo->nombre, $matches);
+                          return $matches[1] ?? 0;
+                      })
+                      ->values(); // Reindexar después del ordenamiento
+        
+        return response()->json($ciclos);
     }
 
     public function generarReporte(Ciclo $ciclo)

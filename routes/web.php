@@ -44,9 +44,11 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
     Route::get('/ciclos/{ciclo}/excel', [CicloController::class, 'exportToExcel'])->name('ciclos.excel');
     Route::get('/ciclos/{ciclo}/configuracion', [CicloController::class, 'getConfiguracion'])->name('ciclos.configuracion');
     Route::get('/ciclos/{ciclo}/configuracion-anterior', [CicloController::class, 'getConfiguracionAnterior'])->name('ciclos.configuracion-anterior');
+    Route::get('/ciclos/configuracion/{nombre}', [CicloController::class, 'getConfiguracionPorNombre'])->name('ciclos.configuracion-por-nombre');
     Route::put('/ciclos/{ciclo}/deliver', [CicloController::class, 'deliver'])->name('ciclos.deliver');
     Route::put('/ciclos/{ciclo}/completar-entrega', [CicloController::class, 'completarEntrega'])->name('ciclos.completar-entrega');
     Route::patch('/ciclos/{ciclo}/update-descargo', [CicloController::class, 'updateDescargo'])->name('ciclos.update-descargo');
+    Route::get('/ciclos/por-año/{año}', [CicloController::class, 'getCiclosPorAño'])->name('ciclos.por-año');
 });
 
 Route::middleware(['auth'])->group(function () {
