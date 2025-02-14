@@ -28,7 +28,7 @@
                         </div>
 
                         <div class="mt-4">
-                            <x-input-label for="valor" :value="__('Valor')" />
+                            <x-input-label for="valor" :value="__('Costo')" />
                             <x-text-input id="valor" 
                                       name="valor" 
                                       type="number" 
