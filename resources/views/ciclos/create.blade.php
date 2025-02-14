@@ -334,6 +334,23 @@
                 }
             });
 
+            // Función para agregar el evento de eliminación a un botón
+            function agregarEventoEliminar(boton) {
+                boton.addEventListener('click', function() {
+                    const productoDiv = this.closest('.flex.items-center');
+                    if (productoDiv) {
+                        productoDiv.remove();
+                    }
+                });
+            }
+
+            // Agregar eventos de eliminación a los botones existentes
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.eliminar-producto').forEach(boton => {
+                    agregarEventoEliminar(boton);
+                });
+            });
+
             // Template para nuevo producto
             function crearProductoTemplate(especialidadId) {
                 const div = document.createElement('div');
@@ -365,6 +382,10 @@
                     this.setAttribute('data-cantidad-original', valor);
                 });
 
+                // Agregar evento de eliminación al nuevo botón
+                const botonEliminar = div.querySelector('.eliminar-producto');
+                agregarEventoEliminar(botonEliminar);
+
                 return div;
             }
 
@@ -375,11 +396,6 @@
                     const contenedor = document.querySelector(`.productos-dinamicos[data-especialidad-id="${especialidadId}"]`);
                     const nuevoProducto = crearProductoTemplate(especialidadId);
                     contenedor.appendChild(nuevoProducto);
-
-                    // Evento para eliminar producto
-                    nuevoProducto.querySelector('.eliminar-producto').addEventListener('click', function() {
-                        nuevoProducto.remove();
-                    });
                 });
             });
 
