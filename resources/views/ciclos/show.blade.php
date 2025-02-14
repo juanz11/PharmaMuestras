@@ -99,7 +99,10 @@
                                     
                                 </div>
                                 <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-lg font-semibold">{{ $representante->name }}</h3>
+                                    <div>
+                                        <h3 class="text-lg font-semibold">{{ $representante->name }}</h3>
+                                        <p class="text-sm text-gray-600">Zona: {{ $representante->zone ?? 'Sin zona' }}</p>
+                                    </div>
                                     @if($ciclo->status === 'pendiente')
                                         <div class="flex items-center space-x-2">
                                             <button type="button" 
@@ -199,69 +202,88 @@
                             <thead>
                                 <tr>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Representante</th>
-                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zona</th>
                                     @foreach($productos as $producto)
                                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-l">
                                             {{ $producto ? $producto->name : 'Producto eliminado' }}
+                                            @if($producto && $producto->valor)
+                                                <div class="text-xxs text-gray-400 normal-case">
+                                                    (${{ number_format($producto->valor, 2) }})
+                                                </div>
+                                            @endif
                                         </th>
                                     @endforeach
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-l">Valor Total</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($detallesPorRepresentante as $representanteId => $detalles)
+                                    @php
+                                        $valorTotalRepresentante = 0;
+                                    @endphp
                                     <tr>
                                         <td class="px-4 py-2 whitespace-nowrap">
                                             {{ $detalles->first()->representante->name }}
-                                        </td>
-                                        <td class="px-4 py-2 whitespace-nowrap">
-                                            {{ $detalles->first()->representante->zone ?? 'Sin zona' }}
                                         </td>
                                         @foreach($productos as $producto)
                                             @php
                                                 $totalProducto = $detalles
                                                     ->where('producto_id', $producto->id)
                                                     ->sum('cantidad_total');
+                                                $valorProducto = $producto && $producto->valor ? $totalProducto * $producto->valor : 0;
+                                                $valorTotalRepresentante += $valorProducto;
                                             @endphp
                                             <td class="px-4 py-2 whitespace-nowrap text-center border-l">
                                                 {{ $totalProducto > 0 ? round($totalProducto) : '-' }}
                                             </td>
                                         @endforeach
+                                        <td class="px-4 py-2 whitespace-nowrap text-right border-l">
+                                            ${{ number_format($valorTotalRepresentante, 2) }}
+                                        </td>
                                     </tr>
                                 @endforeach
                                 <!-- Fila de hospitalario -->
                                 <tr class="bg-gray-100">
                                     <td class="px-4 py-2 whitespace-nowrap">Hospitalario ({{ $ciclo->porcentaje_hospitalario }}%)</td>
-                                    <td class="px-4 py-2 whitespace-nowrap"></td>
                                     @foreach($productos as $producto)
                                         @php
                                             $totalProducto = collect($detallesPorRepresentante)
                                                 ->flatten(1)
                                                 ->where('producto_id', $producto->id)
                                                 ->sum('cantidad_total');
-                                            $hospitalario = $totalProducto * ($ciclo->porcentaje_hospitalario / 100);
+                                            $hospitalario = round($totalProducto * ($ciclo->porcentaje_hospitalario / 100));
+                                            $valorHospitalario = $producto && $producto->valor ? $hospitalario * $producto->valor : 0;
                                         @endphp
                                         <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                            {{ $hospitalario > 0 ? round($hospitalario) : '-' }}
+                                            {{ $hospitalario > 0 ? $hospitalario : '-' }}
                                         </td>
                                     @endforeach
+                                    <td class="px-4 py-2 whitespace-nowrap text-right border-l">
+                                        ${{ number_format($valorHospitalario, 2) }}
+                                    </td>
                                 </tr>
                                 <!-- Fila de totales -->
                                 <tr class="bg-gray-50 font-semibold">
                                     <td class="px-4 py-2 whitespace-nowrap">Total</td>
-                                    <td class="px-4 py-2 whitespace-nowrap"></td>
+                                    @php
+                                        $valorTotalGeneral = 0;
+                                    @endphp
                                     @foreach($productos as $producto)
                                         @php
                                             $totalProducto = collect($detallesPorRepresentante)
                                                 ->flatten(1)
                                                 ->where('producto_id', $producto->id)
                                                 ->sum('cantidad_total');
-                                            $hospitalario = $totalProducto * ($ciclo->porcentaje_hospitalario / 100);
-                                            $granTotal = $totalProducto + $hospitalario;
+                                            $granTotal = $totalProducto * (1 + ($ciclo->porcentaje_hospitalario / 100));
+                                            $valorTotal = $producto && $producto->valor ? $granTotal * $producto->valor : 0;
+                                            $valorTotalGeneral += $valorTotal;
                                         @endphp
                                         <td class="px-4 py-2 whitespace-nowrap text-center border-l">
                                             {{ $granTotal > 0 ? round($granTotal) : '-' }}
                                         </td>
                                     @endforeach
+                                    <td class="px-4 py-2 whitespace-nowrap text-right border-l font-bold">
+                                        ${{ number_format($valorTotalGeneral, 2) }}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -277,6 +299,8 @@
                                 <tr>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Entregados</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"><strong>Valor Unitario</strong></th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"><strong>Valor Total</strong></th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -287,26 +311,41 @@
                                         ->map(function ($grupo) {
                                             return $grupo->sum('cantidad_total');
                                         });
+                                    $totalValorGeneral = 0;
                                 @endphp
                         
                                 @foreach($resumenPorProducto as $productoId => $total)
                                     @php
                                         $producto = \App\Models\Product::find($productoId);
+                                        $totalConHospitalario = round($total * (1 + $ciclo->porcentaje_hospitalario / 100));
+                                        $valorTotal = $producto ? $totalConHospitalario * $producto->valor : 0;
+                                        $totalValorGeneral += $valorTotal;
                                     @endphp
                                     <tr>
                                         <td class="px-4 py-2 whitespace-nowrap">{{ $producto ? $producto->name : 'Producto eliminado' }}</td>
-                                        <td class="px-4 py-2 whitespace-nowrap">{{ round($total) }}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-center">{{ $totalConHospitalario }}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-right">
+                                            @if($producto && $producto->valor)
+                                                ${{ number_format($producto->valor, 2) }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-right">
+                                            @if($producto && $producto->valor)
+                                                ${{ number_format($valorTotal, 2) }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
 
-                                <tr class="bg-gray-100">
-                                    <td class="px-4 py-2 whitespace-nowrap">Hospitalario ({{ $ciclo->porcentaje_hospitalario }}%)</td>
-                                    <td class="px-4 py-2 whitespace-nowrap">{{ round($resumenPorProducto->sum() * ($ciclo->porcentaje_hospitalario / 100)) }}</td>
-                                </tr>
-                        
                                 <tr class="bg-gray-50 font-semibold">
                                     <td class="px-4 py-2 whitespace-nowrap">Total General</td>
-                                    <td class="px-4 py-2 whitespace-nowrap">{{ round($resumenPorProducto->sum() * (1 + $ciclo->porcentaje_hospitalario / 100)) }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-center">{{ round($resumenPorProducto->sum() * (1 + $ciclo->porcentaje_hospitalario / 100)) }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-right">-</td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-right">${{ number_format($totalValorGeneral, 2) }}</td>
                                 </tr>
                             </tbody>
                         </table>
