@@ -255,7 +255,7 @@
             <table class="resumen-total-table">
                 <thead>
                     <tr>
-                        <th class="representante-column">Representante</th>
+                        <th class="representante-column" style="text-align: center;"># Representante</th>
                         @foreach($productos as $producto)
                             <th class="product-header">
                                 {{ $producto ? $producto->name : 'Producto eliminado' }}
@@ -282,7 +282,7 @@
                             $valorTotalRepresentante = 0;
                         @endphp
                         <tr>
-                            <td>{{ $detalles->first()->representante->name }}</td>
+                            <td>{{ $loop->iteration }}. {{ $detalles->first()->representante->name }}</td>
                             @foreach($productos as $producto)
                                 @php
                                     $totalProducto = $detalles
