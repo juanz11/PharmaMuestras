@@ -302,23 +302,24 @@
                             <td>{{ $loop->iteration }}. {{ $detalles->first()->representante->name }}</td>
                             @foreach($productos as $producto)
                                 @php
-                                    $detalle = $detalles->where('producto_id', $producto->id)->first();
-                                    $cantidad = $detalle ? $detalle->cantidad_total : 0;
-                                    $cantidadTotalFila += $cantidad;
-                                    if ($producto && $detalle) {
-                                        $valorTotalRepresentante += $cantidad * $producto->valor;
+                                    $totalProducto = $detalles
+                                        ->where('producto_id', $producto->id)
+                                        ->sum('cantidad_total');
+                                    $cantidadTotalFila += $totalProducto;
+                                    if ($producto && $totalProducto > 0) {
+                                        $valorTotalRepresentante += $totalProducto * $producto->valor;
                                     }
                                 @endphp
-                                <td style="text-align: center;">{{ $cantidad }}</td>
+                                <td style="text-align: center;">{{ $totalProducto > 0 ? number_format($totalProducto) : '-' }}</td>
                             @endforeach
                             <td style="text-align: right;">${{ number_format($valorTotalRepresentante, 2) }}</td>
                             <td style="text-align: right; font-weight: bold;">{{ number_format($cantidadTotalFila) }}</td>
                         </tr>
                     @endforeach
 
-                    <!-- Fila de hospitalario -->
-                    <tr style="background-color: #f8f9fa;">
-                        <td>Hospitalario ({{ $ciclo->porcentaje_hospitalario }}%)</td>
+                    <!-- Fila Hospitalario -->
+                    <tr>
+                        <td>Hospitalario</td>
                         @php
                             $totalValorHospitalario = 0;
                         @endphp
@@ -333,14 +334,14 @@
                                 $totalValorHospitalario += $valorHospitalario;
                             @endphp
                             <td style="text-align: center;">
-                                {{ $hospitalario > 0 ? $hospitalario : '-' }}
+                                {{ $hospitalario > 0 ? number_format($hospitalario) : '-' }}
                             </td>
                         @endforeach
                         <td style="text-align: right;">
                             ${{ number_format($totalValorHospitalario, 2) }}
                         </td>
                         <td style="text-align: right; font-weight: bold;">
-                            {{ number_format(collect($detallesPorRepresentante)->flatten(1)->sum('cantidad_total') * (1 + $ciclo->porcentaje_hospitalario / 100)) }}
+                            {{ number_format(collect($detallesPorRepresentante)->flatten(1)->sum('cantidad_total') * ($ciclo->porcentaje_hospitalario / 100)) }}
                         </td>
                     </tr>
 
@@ -349,6 +350,7 @@
                         <td>Total</td>
                         @php
                             $valorTotalGeneral = 0;
+                            $cantidadTotalGeneral = 0;
                         @endphp
                         @foreach($productos as $producto)
                             @php
@@ -356,19 +358,22 @@
                                     ->flatten(1)
                                     ->where('producto_id', $producto->id)
                                     ->sum('cantidad_total');
-                                $granTotal = $totalProducto * (1 + ($ciclo->porcentaje_hospitalario / 100));
-                                $valorTotal = $producto && $producto->valor ? $granTotal * $producto->valor : 0;
+                                
+                                // Calculamos el total incluyendo el hospitalario
+                                $totalConHospitalario = $totalProducto * (1 + ($ciclo->porcentaje_hospitalario / 100));
+                                $cantidadTotalGeneral += $totalConHospitalario;
+                                
+                                // Calculamos el valor total
+                                $valorTotal = $producto && $producto->valor ? $totalConHospitalario * $producto->valor : 0;
                                 $valorTotalGeneral += $valorTotal;
                             @endphp
-                            <td style="text-align: center;">
-                                {{ $granTotal > 0 ? round($granTotal) : '-' }}
-                            </td>
+                            <td style="text-align: center;">{{ number_format($totalConHospitalario) }}</td>
                         @endforeach
                         <td style="text-align: right; font-weight: bold;">
                             ${{ number_format($valorTotalGeneral, 2) }}
                         </td>
                         <td style="text-align: right; font-weight: bold;">
-                            {{ number_format(collect($detallesPorRepresentante)->flatten(1)->sum('cantidad_total') * (1 + $ciclo->porcentaje_hospitalario / 100)) }}
+                            {{ number_format($cantidadTotalGeneral) }}
                         </td>
                     </tr>
                 </tbody>
