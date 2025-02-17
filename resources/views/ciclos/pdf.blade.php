@@ -273,7 +273,7 @@
                                 @endif
                             </th>
                         @endforeach
-                        <th style="text-align: right;">Valor Total</th>
+                        <th style="text-align: right;">Costo Total</th>
                     </tr>
                 </thead>
                 <tbody>
