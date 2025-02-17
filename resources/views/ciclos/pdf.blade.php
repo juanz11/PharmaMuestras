@@ -31,6 +31,13 @@
             word-wrap: break-word;
             max-width: 150px;
         }
+        th {
+            border: 1px solid #dee2e6;
+            padding: 6px 4px;
+            font-size: 10px;
+            word-wrap: break-word;
+            max-width: 150px;
+        }
         .specialty-header {
             background-color: #f8f9fa;
             border-left: 2px solid #dee2e6;
@@ -131,6 +138,14 @@
         @page {
             size: legal landscape;
             margin: 5px;
+        }
+        thead tr:first-child {
+            background-color: #1e3a8a !important;
+            color: white !important;
+        }
+        thead tr:first-child th {
+            background-color: #1e3a8a !important;
+            color: white !important;
         }
     </style>
 </head>
