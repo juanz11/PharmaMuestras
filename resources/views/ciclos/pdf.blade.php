@@ -275,7 +275,7 @@
                             <th class="product-header">
                                 {{ $producto ? $producto->name : 'Producto eliminado' }}
                                 @if($producto)
-                                    <div style="font-size: 8px; color: #666;">
+                                    <div style="font-size: 8px; color: white;">
                                         @php
                                             $cantidadPorDoctor = collect($detallesPorRepresentante)
                                                 ->flatten(1)
@@ -289,30 +289,30 @@
                             </th>
                         @endforeach
                         <th style="text-align: right;">Costo Total</th>
+                        <th style="text-align: right; font-weight: bold;">Total General</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($detallesPorRepresentante as $representanteId => $detalles)
                         @php
                             $valorTotalRepresentante = 0;
+                            $cantidadTotalFila = 0;
                         @endphp
                         <tr>
                             <td>{{ $loop->iteration }}. {{ $detalles->first()->representante->name }}</td>
                             @foreach($productos as $producto)
                                 @php
-                                    $totalProducto = $detalles
-                                        ->where('producto_id', $producto->id)
-                                        ->sum('cantidad_total');
-                                    $valorProducto = $producto && $producto->valor ? $totalProducto * $producto->valor : 0;
-                                    $valorTotalRepresentante += $valorProducto;
+                                    $detalle = $detalles->where('producto_id', $producto->id)->first();
+                                    $cantidad = $detalle ? $detalle->cantidad_total : 0;
+                                    $cantidadTotalFila += $cantidad;
+                                    if ($producto && $detalle) {
+                                        $valorTotalRepresentante += $cantidad * $producto->valor;
+                                    }
                                 @endphp
-                                <td style="text-align: center;">
-                                    {{ $totalProducto > 0 ? round($totalProducto) : '-' }}
-                                </td>
+                                <td style="text-align: center;">{{ $cantidad }}</td>
                             @endforeach
-                            <td style="text-align: right;">
-                                ${{ number_format($valorTotalRepresentante, 2) }}
-                            </td>
+                            <td style="text-align: right;">${{ number_format($valorTotalRepresentante, 2) }}</td>
+                            <td style="text-align: right; font-weight: bold;">{{ number_format($cantidadTotalFila) }}</td>
                         </tr>
                     @endforeach
 
@@ -339,6 +339,9 @@
                         <td style="text-align: right;">
                             ${{ number_format($totalValorHospitalario, 2) }}
                         </td>
+                        <td style="text-align: right; font-weight: bold;">
+                            {{ number_format(collect($detallesPorRepresentante)->flatten(1)->sum('cantidad_total') * (1 + $ciclo->porcentaje_hospitalario / 100)) }}
+                        </td>
                     </tr>
 
                     <!-- Fila de totales -->
@@ -363,6 +366,9 @@
                         @endforeach
                         <td style="text-align: right; font-weight: bold;">
                             ${{ number_format($valorTotalGeneral, 2) }}
+                        </td>
+                        <td style="text-align: right; font-weight: bold;">
+                            {{ number_format(collect($detallesPorRepresentante)->flatten(1)->sum('cantidad_total') * (1 + $ciclo->porcentaje_hospitalario / 100)) }}
                         </td>
                     </tr>
                 </tbody>
