@@ -304,6 +304,9 @@
                     <!-- Fila de hospitalario -->
                     <tr style="background-color: #f8f9fa;">
                         <td>Hospitalario ({{ $ciclo->porcentaje_hospitalario }}%)</td>
+                        @php
+                            $totalValorHospitalario = 0;
+                        @endphp
                         @foreach($productos as $producto)
                             @php
                                 $totalProducto = collect($detallesPorRepresentante)
@@ -312,13 +315,14 @@
                                     ->sum('cantidad_total');
                                 $hospitalario = round($totalProducto * ($ciclo->porcentaje_hospitalario / 100));
                                 $valorHospitalario = $producto && $producto->valor ? $hospitalario * $producto->valor : 0;
+                                $totalValorHospitalario += $valorHospitalario;
                             @endphp
                             <td style="text-align: center;">
                                 {{ $hospitalario > 0 ? $hospitalario : '-' }}
                             </td>
                         @endforeach
                         <td style="text-align: right;">
-                            ${{ number_format($valorHospitalario, 2) }}
+                            ${{ number_format($totalValorHospitalario, 2) }}
                         </td>
                     </tr>
 
