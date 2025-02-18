@@ -12,7 +12,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                <form id="ciclo-form">
+                <form action="{{ route('ciclos.store') }}" method="POST" id="cicloForm">
                     @csrf
                     <div class="mb-8" id="paso1">
                         <div class="flex justify-between items-center mb-4">
@@ -200,8 +200,8 @@
                         <button type="button" id="siguiente" class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important;">
                             Siguiente
                         </button>
-                        <button type="submit" id="confirmar" class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important; display: none;">
-                            Confirmar Ciclo
+                        <button type="button" id="guardar" class="text-white font-bold py-2 px-4 rounded" style="background-color: #0d6efd !important; display: none;">
+                            Guardar
                         </button>
                     </div>
                 </form>
@@ -212,12 +212,12 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('ciclo-form');
+            const form = document.getElementById('cicloForm');
             const paso1 = document.getElementById('paso1');
             const paso2 = document.getElementById('paso2');
             const btnAnterior = document.getElementById('anterior');
             const btnSiguiente = document.getElementById('siguiente');
-            const btnConfirmar = document.getElementById('confirmar');
+            const btnGuardar = document.getElementById('guardar');
             const btnSeleccionarTodos = document.getElementById('seleccionarTodos');
             const btnCargarCiclo = document.getElementById('cargarConfiguracion');
             const selectCicloPrevio = document.getElementById('ciclo-selector');
@@ -241,7 +241,7 @@
                 paso2.style.display = 'block';
                 btnAnterior.style.display = 'block';
                 btnSiguiente.style.display = 'none';
-                btnConfirmar.style.display = 'block';
+                btnGuardar.style.display = 'block';
             });
 
             btnAnterior.addEventListener('click', function() {
@@ -249,12 +249,43 @@
                 paso2.style.display = 'none';
                 btnAnterior.style.display = 'none';
                 btnSiguiente.style.display = 'block';
-                btnConfirmar.style.display = 'none';
+                btnGuardar.style.display = 'none';
             });
 
-            form.addEventListener('submit', async function(e) {
+            btnGuardar.addEventListener('click', async function(e) {
                 e.preventDefault();
                 
+                const productos = document.querySelectorAll('.producto-div');
+                let mensajesError = [];
+
+                productos.forEach(function(productoDiv) {
+                    const select = productoDiv.querySelector('.producto-select');
+                    const input = productoDiv.querySelector('.cantidad-input');
+                    const productoId = parseInt(select.value);
+                    const cantidad = parseInt(input.value) || 0;
+
+                    @foreach($productos as $producto)
+                    if ({{ $producto->id }} === productoId) {
+                        const disponible = {{ $producto->quantity }};
+                        console.log('Validando producto:', {
+                            id: productoId,
+                            nombre: '{{ $producto->name }}',
+                            disponible: disponible,
+                            solicitado: cantidad
+                        });
+                        if (cantidad > disponible) {
+                            mensajesError.push(`No hay suficiente inventario del producto {{ $producto->name }}. Disponible: ${disponible}, Requerido: ${cantidad}`);
+                        }
+                    }
+                    @endforeach
+                });
+
+                if (mensajesError.length > 0) {
+                    alert(mensajesError.join('\n'));
+                    return false;
+                }
+                
+                // Si no hay errores, enviamos el formulario
                 try {
                     // Validar que se haya seleccionado un nombre de ciclo
                     const nombreCiclo = document.getElementById('nombre_ciclo').value;
@@ -358,16 +389,18 @@
             // Template para nuevo producto
             function crearProductoTemplate(especialidadId) {
                 const div = document.createElement('div');
-                div.className = 'flex items-center space-x-2 mt-2';
+                div.className = 'producto-div flex items-center space-x-2 mb-2';
                 div.innerHTML = `
                     <select class="producto-select flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         <option value="">Seleccionar Producto</option>
                         @foreach($productos as $producto)
-                        <option value="{{ $producto->id }}">{{ $producto->name }}</option>
+                        <option value="{{ $producto->id }}" data-quantity="{{ $producto->quantity }}">
+                            {{ $producto->name }}
+                        </option>
                         @endforeach
                     </select>
                     <input type="number" 
-                           class="cantidad-input w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                           class="cantidad-input rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
                            placeholder="Cantidad" 
                            min="1" 
                            value="1">
@@ -376,15 +409,34 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
+                    <span class="stock-warning text-red-500 text-sm ml-2" style="display: none;"></span>
                 `;
 
                 const cantidadInput = div.querySelector('.cantidad-input');
-                
-                // Manejar cambios en la cantidad
-                cantidadInput.addEventListener('input', function() {
-                    const valor = parseInt(this.value) || 1;
-                    this.setAttribute('data-cantidad-original', valor);
-                });
+                const productoSelect = div.querySelector('.producto-select');
+                const warning = div.querySelector('.stock-warning');
+
+                // Función para verificar cantidad
+                function verificarCantidad() {
+                    const cantidad = parseInt(cantidadInput.value) || 0;
+                    const option = productoSelect.selectedOptions[0];
+                    if (option && option.value) {
+                        const disponible = parseInt(option.dataset.quantity) || 0;
+                        if (cantidad > disponible) {
+                            warning.textContent = `Advertencia: Cantidad excede el inventario disponible (${disponible})`;
+                            warning.style.display = 'inline';
+                            cantidadInput.classList.add('border-red-500');
+                        } else {
+                            warning.style.display = 'none';
+                            cantidadInput.classList.remove('border-red-500');
+                        }
+                    }
+                }
+
+                // Verificar cuando cambie la cantidad
+                cantidadInput.addEventListener('input', verificarCantidad);
+                // Verificar cuando cambie el producto
+                productoSelect.addEventListener('change', verificarCantidad);
 
                 // Agregar evento de eliminación al nuevo botón
                 const botonEliminar = div.querySelector('.eliminar-producto');
