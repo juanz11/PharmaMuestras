@@ -459,6 +459,9 @@
                         
                         const especialidadId = especialidadDiv.dataset.especialidadId;
                         
+                        // Obtener porcentaje hospitalario
+                        const porcentajeHospitalario = parseInt(document.getElementById('porcentaje_hospitalario').value) || 0;
+                        
                         // Contar doctores para esta especialidad
                         let totalDoctores = 0;
                         const representantesSeleccionados = document.querySelectorAll('input[name="representantes[]"]:checked');
@@ -473,11 +476,17 @@
                             }
                         });
 
-                        // Calcular cantidad total necesaria
-                        const cantidadTotal = cantidad * totalDoctores;
+                        // Calcular cantidad base total
+                        const cantidadBase = cantidad * totalDoctores;
+                        
+                        // Calcular cantidad adicional por porcentaje hospitalario
+                        const cantidadAdicional = Math.round(cantidadBase * (porcentajeHospitalario / 100));
+                        
+                        // Cantidad total incluyendo el porcentaje hospitalario
+                        const cantidadTotal = cantidadBase + cantidadAdicional;
                         
                         if (cantidadTotal > disponible) {
-                            const mensaje = `Advertencia: Cantidad total necesaria (${cantidad} por doctor × ${totalDoctores} doctores = ${cantidadTotal}) excede el inventario disponible (${disponible})`;
+                            const mensaje = `Advertencia: Cantidad total necesaria (${cantidad} por doctor × ${totalDoctores} doctores = ${cantidadBase}) + ${cantidadAdicional} (${porcentajeHospitalario}% hospitalario) = ${cantidadTotal}, excede el inventario disponible (${disponible})`;
                             warning.textContent = mensaje;
                             warning.style.display = 'inline';
                             cantidadInput.classList.add('border-red-500');
@@ -496,17 +505,14 @@
                 cantidadInput.addEventListener('input', verificarCantidad);
                 // Verificar cuando cambie el producto
                 productoSelect.addEventListener('change', verificarCantidad);
-                
-                // Verificar cuando cambie la selección de representantes
-                document.querySelectorAll('input[name="representantes[]"]').forEach(checkbox => {
-                    checkbox.addEventListener('change', () => {
-                        const productosEnEspecialidad = document.querySelectorAll('.especialidad-div[data-especialidad-id] .producto-div');
-                        productosEnEspecialidad.forEach(productoDiv => {
-                            const cantidadInput = productoDiv.querySelector('.cantidad-input');
-                            if (cantidadInput) {
-                                cantidadInput.dispatchEvent(new Event('input'));
-                            }
-                        });
+                // Verificar cuando cambie el porcentaje hospitalario
+                document.getElementById('porcentaje_hospitalario').addEventListener('input', () => {
+                    const productosEnEspecialidad = document.querySelectorAll('.especialidad-div[data-especialidad-id] .producto-div');
+                    productosEnEspecialidad.forEach(productoDiv => {
+                        const cantidadInput = productoDiv.querySelector('.cantidad-input');
+                        if (cantidadInput) {
+                            cantidadInput.dispatchEvent(new Event('input'));
+                        }
                     });
                 });
 
