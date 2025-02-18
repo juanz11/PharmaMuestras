@@ -191,6 +191,49 @@
                         <td style="text-align: center;">{{ round($total) }}</td>
                     </tr>
                 @endforeach
+                @php
+                    $totalPorEspecialidad = [];
+                    $totalHospitalario = 0;
+                    $totalCosto = 0;
+                    $totalGeneral = 0;
+                    
+                    foreach($productos as $productoId => $detalles) {
+                        $producto = $detalles->first()->producto;
+                        $totalProductoRegular = 0;
+                        
+                        foreach($especialidades as $especialidad) {
+                            $detalle = $detalles->first(function($d) use ($especialidad) {
+                                return $d->especialidad_id === $especialidad->id;
+                            });
+                            if ($detalle) {
+                                $totalProductoRegular += $detalle->cantidad_total;
+                                if (!isset($totalPorEspecialidad[$especialidad->id])) {
+                                    $totalPorEspecialidad[$especialidad->id] = 0;
+                                }
+                                $totalPorEspecialidad[$especialidad->id] += $detalle->cantidad_total;
+                            }
+                        }
+                        
+                        $hospitalario = $totalProductoRegular * ($ciclo->porcentaje_hospitalario / 100);
+                        $total = $totalProductoRegular + $hospitalario;
+                        $valor = $producto ? $total * floatval($producto->valor) : 0;
+                        
+                        $totalHospitalario += round($hospitalario);
+                        $totalCosto += $valor;
+                        $totalGeneral += round($total);
+                    }
+                @endphp
+                <tr style="font-weight: bold; background-color: #f8f9fa;">
+                    <td>TOTAL</td>
+                    @foreach($especialidades as $especialidad)
+                        <td style="text-align: center;">
+                            {{ isset($totalPorEspecialidad[$especialidad->id]) ? $totalPorEspecialidad[$especialidad->id] : 0 }}
+                        </td>
+                    @endforeach
+                    <td style="text-align: center;">{{ $totalHospitalario }}</td>
+                    <td style="text-align: center;">${{ number_format($totalCosto, 2) }}</td>
+                    <td style="text-align: center;">{{ $totalGeneral }}</td>
+                </tr>
             </tbody>
         </table>
 
