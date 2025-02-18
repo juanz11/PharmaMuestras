@@ -31,7 +31,7 @@
                                 @foreach($representantes as $representante)
                                 <div class="border p-4 rounded">
                                     <label class="flex items-center space-x-3">
-                                        <input type="checkbox" name="representantes[]" value="{{ $representante->id }}" class="form-checkbox h-5 w-5 text-blue-600">
+                                        <input type="checkbox" name="representantes[]" value="{{ $representante->id }}" class="form-checkbox h-5 w-5 text-blue-600" data-doctors='{{ json_encode($representante->doctors) }}'>
                                         <span>{{ $representante->name }}</span>
                                         <span class="text-sm text-gray-500">({{ $representante->doctors->sum('doctors_count') }} doctores)</span>
                                     </label>
@@ -148,7 +148,7 @@
 
                         <div id="especialidades-config">
                             @foreach($especialidades as $especialidad)
-                                <div class="border p-4 rounded mb-4">
+                                <div class="border p-4 rounded mb-4 especialidad-div" data-especialidad-id="{{ $especialidad->id }}">
                                     <h4 class="font-semibold mb-2">{{ $especialidad->name }}</h4>
                                     <div class="space-y-4">
                                         <!-- Productos Recomendados -->
@@ -452,8 +452,37 @@
                     const option = productoSelect.selectedOptions[0];
                     if (option && option.value) {
                         const disponible = parseInt(option.dataset.quantity) || 0;
-                        if (cantidad > disponible) {
-                            warning.textContent = `Advertencia: Cantidad excede el inventario disponible (${disponible})`;
+                        
+                        // Obtener el div de la especialidad que contiene este producto
+                        const especialidadDiv = div.closest('.especialidad-div');
+                        if (!especialidadDiv) return;
+                        
+                        const especialidadId = especialidadDiv.dataset.especialidadId;
+                        
+                        // Contar doctores para esta especialidad
+                        let totalDoctores = 0;
+                        const representantesSeleccionados = document.querySelectorAll('input[name="representantes[]"]:checked');
+                        
+                        representantesSeleccionados.forEach(rep => {
+                            try {
+                                const doctores = JSON.parse(rep.dataset.doctors);
+                                const doctoresEspecialidad = doctores.filter(d => parseInt(d.medical_specialty_id) === parseInt(especialidadId));
+                                totalDoctores += doctoresEspecialidad.length;
+                            } catch (error) {
+                                console.error('Error al procesar doctores:', error);
+                            }
+                        });
+
+                        // Calcular cantidad total necesaria
+                        const cantidadTotal = cantidad * totalDoctores;
+                        
+                        if (cantidadTotal > disponible) {
+                            const mensaje = `Advertencia: Cantidad total necesaria (${cantidad} por doctor × ${totalDoctores} doctores = ${cantidadTotal}) excede el inventario disponible (${disponible})`;
+                            warning.textContent = mensaje;
+                            warning.style.display = 'inline';
+                            cantidadInput.classList.add('border-red-500');
+                        } else if (totalDoctores === 0) {
+                            warning.textContent = 'Seleccione al menos un representante con doctores en esta especialidad';
                             warning.style.display = 'inline';
                             cantidadInput.classList.add('border-red-500');
                         } else {
@@ -467,6 +496,19 @@
                 cantidadInput.addEventListener('input', verificarCantidad);
                 // Verificar cuando cambie el producto
                 productoSelect.addEventListener('change', verificarCantidad);
+                
+                // Verificar cuando cambie la selección de representantes
+                document.querySelectorAll('input[name="representantes[]"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => {
+                        const productosEnEspecialidad = document.querySelectorAll('.especialidad-div[data-especialidad-id] .producto-div');
+                        productosEnEspecialidad.forEach(productoDiv => {
+                            const cantidadInput = productoDiv.querySelector('.cantidad-input');
+                            if (cantidadInput) {
+                                cantidadInput.dispatchEvent(new Event('input'));
+                            }
+                        });
+                    });
+                });
 
                 // Agregar evento de eliminación al nuevo botón
                 const botonEliminar = div.querySelector('.eliminar-producto');
