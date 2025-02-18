@@ -211,6 +211,36 @@
 
     @push('scripts')
     <script>
+        // Clase para convertir números a romanos
+        const NumberToRoman = {
+            convert: function(num) {
+                const valores = [
+                    { valor: 1000, romano: 'M' },
+                    { valor: 900, romano: 'CM' },
+                    { valor: 500, romano: 'D' },
+                    { valor: 400, romano: 'CD' },
+                    { valor: 100, romano: 'C' },
+                    { valor: 90, romano: 'XC' },
+                    { valor: 50, romano: 'L' },
+                    { valor: 40, romano: 'XL' },
+                    { valor: 10, romano: 'X' },
+                    { valor: 9, romano: 'IX' },
+                    { valor: 5, romano: 'V' },
+                    { valor: 4, romano: 'IV' },
+                    { valor: 1, romano: 'I' }
+                ];
+                
+                let resultado = '';
+                for (let i = 0; i < valores.length; i++) {
+                    while (num >= valores[i].valor) {
+                        resultado += valores[i].romano;
+                        num -= valores[i].valor;
+                    }
+                }
+                return resultado;
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('cicloForm');
             const paso1 = document.getElementById('paso1');
@@ -537,7 +567,7 @@
             document.getElementById('dias_habiles').addEventListener('input', actualizarCantidades);
 
             // Evento para cargar ciclos cuando se selecciona un año
-            añoSelector.addEventListener('change', function() {
+            document.getElementById('año-selector').addEventListener('change', function() {
                 const año = this.value;
                 const cicloSelector = document.getElementById('ciclo-selector');
                 
@@ -548,10 +578,17 @@
                     fetch(`/ciclos/por-año/${año}`)
                         .then(response => response.json())
                         .then(ciclos => {
-                            ciclos.forEach(ciclo => {
+                            ciclos.forEach((ciclo, index) => {
                                 const option = document.createElement('option');
                                 option.value = ciclo.nombre;
-                                option.textContent = ciclo.nombre;
+                                // Convertir el número a romano
+                                const match = ciclo.nombre.match(/Ciclo (\d+)/);
+                                if (match) {
+                                    const numero = parseInt(match[1]);
+                                    option.textContent = `Ciclo ${NumberToRoman.convert(numero)}`;
+                                } else {
+                                    option.textContent = ciclo.nombre;
+                                }
                                 cicloSelector.appendChild(option);
                             });
                         })
