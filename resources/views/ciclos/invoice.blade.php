@@ -146,7 +146,7 @@
                         <th style="text-align: center; width: {{ 50 / $especialidades->count() }}%;">{{ $especialidad->name }}</th>
                     @endforeach
                     <th style="text-align: center; width: 10%;">Hosp.</th>
-                    <th style="text-align: center; width: 10%;">Valor</th>
+                    <th style="text-align: center; width: 10%;">Costo</th>
                     <th style="text-align: center; width: 10%;">Total</th>
                 </tr>
             </thead>
