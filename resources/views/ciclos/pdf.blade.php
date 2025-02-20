@@ -213,7 +213,7 @@
                                                 ->first()
                                                 ->cantidad_por_doctor ?? 0;
                                         @endphp
-                                        ({{ $cantidadPorDoctor }} und)
+                                       
                                     </div>
                                 @endif
                             </th>
