@@ -451,6 +451,7 @@
                     const cantidad = parseInt(cantidadInput.value) || 0;
                     const option = productoSelect.selectedOptions[0];
                     if (option && option.value) {
+                        const productoId = option.value;
                         const disponible = parseInt(option.dataset.quantity) || 0;
                         
                         // Obtener el div de la especialidad que contiene este producto
@@ -476,17 +477,43 @@
                             }
                         });
 
-                        // Calcular cantidad base total
+                        // Calcular cantidad base total para esta especialidad
                         const cantidadBase = cantidad * totalDoctores;
                         
-                        // Calcular cantidad adicional por porcentaje hospitalario
-                        const cantidadAdicional = Math.round(cantidadBase * (porcentajeHospitalario / 100));
+                        // Sumar todas las cantidades del mismo producto en otras especialidades
+                        let cantidadTotalProducto = cantidadBase;
+                        document.querySelectorAll('.especialidad-div').forEach(otherEspDiv => {
+                            if (otherEspDiv !== especialidadDiv) {
+                                otherEspDiv.querySelectorAll('.producto-select').forEach(otherSelect => {
+                                    if (otherSelect.value === productoId) {
+                                        const otherCantidad = parseInt(otherSelect.closest('.flex').querySelector('.cantidad-input').value) || 0;
+                                        const otherEspId = otherEspDiv.dataset.especialidadId;
+                                        let otherDoctores = 0;
+                                        
+                                        representantesSeleccionados.forEach(rep => {
+                                            try {
+                                                const doctores = JSON.parse(rep.dataset.doctors);
+                                                const doctoresOtraEsp = doctores.filter(d => parseInt(d.medical_specialty_id) === parseInt(otherEspId));
+                                                otherDoctores += doctoresOtraEsp.length;
+                                            } catch (error) {
+                                                console.error('Error al procesar doctores de otra especialidad:', error);
+                                            }
+                                        });
+                                        
+                                        cantidadTotalProducto += (otherCantidad * otherDoctores);
+                                    }
+                                });
+                            }
+                        });
+                        
+                        // Calcular cantidad adicional por porcentaje hospitalario sobre el total
+                        const cantidadAdicional = Math.round(cantidadTotalProducto * (porcentajeHospitalario / 100));
                         
                         // Cantidad total incluyendo el porcentaje hospitalario
-                        const cantidadTotal = cantidadBase + cantidadAdicional;
+                        const cantidadTotal = cantidadTotalProducto + cantidadAdicional;
                         
                         if (cantidadTotal > disponible) {
-                            const mensaje = `Advertencia: Cantidad total necesaria (${cantidad} por doctor × ${totalDoctores} doctores = ${cantidadBase}) + ${cantidadAdicional} (${porcentajeHospitalario}% hospitalario) = ${cantidadTotal}, excede el inventario disponible (${disponible})`;
+                            const mensaje = `Advertencia: Cantidad total necesaria (${cantidadTotalProducto} total entre todas las especialidades) + ${cantidadAdicional} (${porcentajeHospitalario}% hospitalario) = ${cantidadTotal}, excede el inventario disponible (${disponible})`;
                             warning.textContent = mensaje;
                             warning.style.display = 'inline';
                             cantidadInput.classList.add('border-red-500');
