@@ -138,6 +138,11 @@
                                     <div id="meta-progress" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500" style="width: 100%"></div>
                                 </div>
                             </div>
+                            <div class="mt-2 text-sm text-gray-600">
+                                <span id="factor_texto" class="hidden">
+                                    Se aplicará un factor de <span id="factor_valor">100%</span> al total final de productos
+                                </span>
+                            </div>
                         </div>
 
                         <div class="mb-4">
@@ -297,12 +302,6 @@
                     @foreach($productos as $producto)
                     if ({{ $producto->id }} === productoId) {
                         const disponible = {{ $producto->quantity }};
-                        console.log('Validando producto:', {
-                            id: productoId,
-                            nombre: '{{ $producto->name }}',
-                            disponible: disponible,
-                            solicitado: cantidad
-                        });
                         if (cantidad > disponible) {
                             mensajesError.push(`No hay suficiente inventario del producto {{ $producto->name }}. Disponible: ${disponible}, Requerido: ${cantidad}`);
                         }
@@ -314,8 +313,7 @@
                     alert(mensajesError.join('\n'));
                     return false;
                 }
-                
-                // Si no hay errores, enviamos el formulario
+
                 try {
                     // Validar que se haya seleccionado un nombre de ciclo
                     const nombreCiclo = document.getElementById('nombre_ciclo').value;
@@ -324,20 +322,26 @@
                         return;
                     }
 
+                    // Calcular el factor basado en la meta actual
+                    const objetivo = parseInt(document.getElementById('objetivo').value) || 0;
+                    const diasHabiles = parseInt(document.getElementById('dias_habiles').value) || 0;
+                    const metaActual = objetivo * Math.min(diasHabiles, 20);
+                    // Si la meta es 100% o más, el factor es 1 (sin reducción)
+                    const factor = metaActual >= 140 ? 1 : (metaActual / 140);
+
                     // Recopilar datos del formulario
                     const formData = {
                         nombre: nombreCiclo,
                         porcentaje_hospitalario: document.getElementById('porcentaje_hospitalario').value,
-                        objetivo: document.getElementById('objetivo').value,
-                        dias_habiles: document.getElementById('dias_habiles').value,
+                        objetivo: objetivo,
+                        dias_habiles: diasHabiles,
+                        factor_porcentaje: factor,
                         representantes: [],
                         detalles: []
                     };
 
                     // Obtener representantes seleccionados
-                    const representantesSeleccionados = [];
                     document.querySelectorAll('input[name="representantes[]"]:checked').forEach(rep => {
-                        representantesSeleccionados.push(rep.value);
                         formData.representantes.push(rep.value);
                     });
 
@@ -356,9 +360,9 @@
                             
                             if (productoSelect.value && cantidadInput.value) {
                                 // Crear un detalle para cada representante seleccionado
-                                representantesSeleccionados.forEach(representanteId => {
+                                document.querySelectorAll('input[name="representantes[]"]:checked').forEach(representante => {
                                     formData.detalles.push({
-                                        representante_id: representanteId,
+                                        representante_id: representante.value,
                                         especialidad_id: especialidadId,
                                         producto_id: productoSelect.value,
                                         cantidad_por_doctor: parseInt(cantidadInput.value)
@@ -593,8 +597,8 @@
                 });
             });
 
-            // Función para calcular el porcentaje y actualizar cantidades
-            function actualizarCantidades() {
+            // Función para calcular el porcentaje y actualizar UI
+            function actualizarMetaYFactor() {
                 const objetivo = parseInt(document.getElementById('objetivo').value) || 0;
                 const diasHabiles = parseInt(document.getElementById('dias_habiles').value) || 0;
                 const diasMaximos = 20; // Máximo de días efectivos para el cálculo
@@ -619,27 +623,21 @@
                 const progressBar = document.getElementById('meta-progress');
                 progressBar.style.width = `${Math.min(porcentajeFormateado, 100)}%`;
                 progressBar.style.backgroundColor = porcentajeFormateado >= 100 ? '#10B981' : '#3B82F6';
-                
-                // Actualizar cantidades de productos
-                document.querySelectorAll('.cantidad-input').forEach(input => {
-                    const cantidadOriginal = parseInt(input.getAttribute('data-cantidad-original')) || parseInt(input.value) || 1;
-                    if (!input.hasAttribute('data-cantidad-original')) {
-                        input.setAttribute('data-cantidad-original', cantidadOriginal);
-                    }
-                    const nuevaCantidad = Math.max(1, Math.round(cantidadOriginal * (porcentaje / 100)));
-                    input.value = nuevaCantidad;
-                    
-                    // Resaltar cambios en las cantidades
-                    const esReduccion = nuevaCantidad < cantidadOriginal;
-                    input.classList.remove('bg-yellow-50', 'bg-red-50');
-                    input.classList.add(esReduccion ? 'bg-red-50' : 'bg-yellow-50');
-                    setTimeout(() => input.classList.remove('bg-yellow-50', 'bg-red-50'), 500);
-                });
+
+                // Mostrar el factor que se aplicará solo si es menor al 100%
+                const factorTexto = document.getElementById('factor_texto');
+                const factorValor = document.getElementById('factor_valor');
+                if (porcentajeFormateado < 100) {
+                    factorTexto.classList.remove('hidden');
+                    factorValor.textContent = porcentajeFormateado + '%';
+                } else {
+                    factorTexto.classList.add('hidden');
+                }
             }
 
             // Agregar event listeners para los campos de objetivo y días hábiles
-            document.getElementById('objetivo').addEventListener('input', actualizarCantidades);
-            document.getElementById('dias_habiles').addEventListener('input', actualizarCantidades);
+            document.getElementById('objetivo').addEventListener('input', actualizarMetaYFactor);
+            document.getElementById('dias_habiles').addEventListener('input', actualizarMetaYFactor);
 
             // Evento para cargar ciclos cuando se selecciona un año
             document.getElementById('año-selector').addEventListener('change', function() {
@@ -719,7 +717,7 @@
                         document.getElementById('dias_habiles').value = data.dias_habiles;
 
                         // Actualizar cantidades según objetivo y días
-                        actualizarCantidades();
+                        actualizarMetaYFactor();
 
                         // Mostrar mensaje de éxito
                         alert('Configuración cargada exitosamente');

@@ -92,6 +92,7 @@
                             @php
                                 $representante = $detalles->first()->representante;
                                 $descargo = isset($descargos[$representanteId]) ? $descargos[$representanteId] : null;
+                                $valorTotalRepresentante = 0;
                             @endphp
                             <div class="bg-white shadow rounded-lg p-6 mb-6">
                                 <div class="grid grid-cols-2 gap-4">
@@ -121,59 +122,51 @@
                                         </div>
                                     @endif
                                 </div>
-                                <div class="overflow-x-auto">
+                                <div class="overflow-x-auto mt-6">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead>
                                             <tr>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                                                @php
-                                                    $especialidades = \App\Models\MedicalSpecialty::whereIn('id', $detalles->pluck('especialidad_id')->unique())->get();
-                                                @endphp
-                                                @foreach($especialidades as $especialidad)
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        {{ $especialidad->name }}
-                                                        <div class="text-xxs text-gray-400 normal-case">
-                                                            ({{ $detalles->first()->representante->doctors->where('medical_specialty_id', $especialidad->id)->sum('doctors_count') }} )
-                                                        </div>
-                                                    </th>
-                                                @endforeach
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospitalario</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><strong>TOTAL</strong></th>
+                                                <th class="px-4 py-2 bg-gray-100 text-left">Producto</th>
+                                                <th class="px-4 py-2 bg-gray-100 text-center">{{ $detalles->first()->especialidad->name }}<br>({{ $representante->doctors()->where('medical_specialty_id', $detalles->first()->especialidad_id)->value('doctors_count') }} )</th>
+                                                <th class="px-4 py-2 bg-gray-100 text-center">Hospitalario</th>
+                                                <th class="px-4 py-2 bg-gray-100 text-center">TOTAL</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            @php
-                                                $productos = $detalles->groupBy('producto_id');
-                                            @endphp
-                                            @foreach($productos as $productoId => $productoDetalles)
+                                        <tbody>
+                                            @foreach($detalles->groupBy('producto_id') as $productoId => $detallesProducto)
                                                 @php
-                                                    $producto = \App\Models\Product::find($productoId);
-                                                    $totalProducto = 0;
+                                                    $detalle = $detallesProducto->first();
+                                                    if ($detalle) {
+                                                        $totalProducto = $detalles->where('producto_id', $detalle->producto_id)
+                                                            ->sum('cantidad_total');
+                                                        
+                                                        // Calcular el factor basado en la meta actual
+                                                        $metaActual = $ciclo->objetivo * min($ciclo->dias_habiles, 20);
+                                                        $factor = $metaActual >= 140 ? 1 : ($metaActual / 140);
+                                                        
+                                                        // Calcular cantidades sin factor
+                                                        $doctoresCount = $representante->doctors()
+                                                            ->where('medical_specialty_id', $detalle->especialidad_id)
+                                                            ->value('doctors_count');
+                                                        $cantidadBase = $detalle->cantidad_por_doctor * $doctoresCount;
+                                                        $cantidadHospitalario = ceil($cantidadBase * ($ciclo->porcentaje_hospitalario / 100));
+                                                        $cantidadTotal = $cantidadBase + $cantidadHospitalario;
+                                                        
+                                                        // Aplicar factor a las cantidades
+                                                        $cantidadBaseConFactor = ceil($cantidadBase * $factor);
+                                                        $cantidadHospitalarioConFactor = ceil($cantidadHospitalario * $factor);
+                                                        $cantidadTotalConFactor = $cantidadBaseConFactor + $cantidadHospitalarioConFactor;
+                                                        
+                                                        $valorBase = $cantidadBaseConFactor * $detalle->producto->valor;
+                                                        $valorHospitalario = $cantidadHospitalarioConFactor * $detalle->producto->valor;
+                                                        $valorTotal = $cantidadTotalConFactor * $detalle->producto->valor;
+                                                    }
                                                 @endphp
                                                 <tr>
-                                                    <td class="px-4 py-2 whitespace-nowrap">{{ $producto ? $producto->name : 'Producto eliminado' }}</td>
-                                                    @foreach($especialidades as $especialidad)
-                                                        @php
-                                                            $detalle = $productoDetalles->where('especialidad_id', $especialidad->id)->first();
-                                                            if ($detalle) {
-                                                                $totalProducto += $detalle->cantidad_total;
-                                                            }
-                                                        @endphp
-                                                        <td class="px-4 py-2 whitespace-nowrap">
-                                                            @if($detalle)
-                                                                {{ round($detalle->cantidad_total) }}
-                                                                <div class="text-xs text-gray-500">
-                                                                    ({{ $detalle->cantidad_por_doctor }} und)
-                                                                </div>
-                                                            @else
-                                                                -
-                                                            @endif
-                                                        </td>
-                                                    @endforeach
-                                                    <td class="px-4 py-2 whitespace-nowrap">
-                                                        {{ round($totalProducto * ($ciclo->porcentaje_hospitalario / 100)) }}
-                                                    </td>
-                                                    <td class="px-4 py-2 whitespace-nowrap"><strong>{{ round($totalProducto + $totalProducto * ($ciclo->porcentaje_hospitalario / 100)) }}</strong></td>
+                                                    <td class="border px-4 py-2">{{ $detalle->producto->name }}</td>
+                                                    <td class="border px-4 py-2 text-center">{{ $cantidadBaseConFactor }}<br>(${{ number_format($valorBase, 2) }})</td>
+                                                    <td class="border px-4 py-2 text-center">{{ $cantidadHospitalarioConFactor }}<br>(${{ number_format($valorHospitalario, 2) }})</td>
+                                                    <td class="border px-4 py-2 text-center">{{ $cantidadTotalConFactor }}<br>(${{ number_format($valorTotal, 2) }})</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
@@ -198,6 +191,19 @@
                                     ->map(function($productoId) {
                                         return \App\Models\Product::find($productoId);
                                     });
+
+                                // Calcular resumen por producto
+                                $resumenPorProducto = collect($detallesPorRepresentante)
+                                    ->flatten(1)
+                                    ->groupBy('producto_id')
+                                    ->map(function ($grupo) {
+                                        return $grupo->sum('cantidad_total');
+                                    });
+
+                                $totalValorGeneral = 0;
+                                // Calcular el factor basado en la meta actual
+                                $metaActual = $ciclo->objetivo * $ciclo->dias_habiles;
+                                $factor = $metaActual >= 140 ? 1 : ($metaActual / 140);
                             @endphp
                             <thead>
                                 <tr>
@@ -218,22 +224,39 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($detallesPorRepresentante as $representanteId => $detalles)
                                     @php
+                                        $representante = $detalles->first()->representante;
                                         $valorTotalRepresentante = 0;
+                                        
+                                        // Calcular el factor basado en la meta actual
+                                        $metaActual = $ciclo->objetivo * $ciclo->dias_habiles;
+                                        $factor = $metaActual >= 140 ? 1 : ($metaActual / 140);
                                     @endphp
                                     <tr>
                                         <td class="px-4 py-2 whitespace-nowrap">
-                                            {{ $loop->iteration }}. {{ $detalles->first()->representante->name }}
+                                            {{ $loop->iteration }}. {{ $representante->name }}
                                         </td>
                                         @foreach($productos as $producto)
                                             @php
                                                 $totalProducto = $detalles
                                                     ->where('producto_id', $producto->id)
-                                                    ->sum('cantidad_total');
-                                                $valorProducto = $producto && $producto->valor ? $totalProducto * $producto->valor : 0;
-                                                $valorTotalRepresentante += $valorProducto;
+                                                    ->sum(function($detalle) use ($representante) {
+                                                        $doctoresCount = $representante->doctors()
+                                                            ->where('medical_specialty_id', $detalle->especialidad_id)
+                                                            ->value('doctors_count');
+                                                        return $detalle->cantidad_por_doctor * $doctoresCount;
+                                                    });
+                                                
+                                                $totalConFactor = ceil($totalProducto * $factor);
+                                                $valorTotal = $totalConFactor * $producto->valor;
+                                                $valorTotalRepresentante += $valorTotal;
                                             @endphp
                                             <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                                {{ $totalProducto > 0 ? round($totalProducto) : '-' }}
+                                                {{ $totalConFactor }}
+                                                @if($producto && $producto->valor)
+                                                    <div class="text-xs text-gray-500">
+                                                        (${{ number_format($valorTotal, 2) }})
+                                                    </div>
+                                                @endif
                                             </td>
                                         @endforeach
                                         <td class="px-4 py-2 whitespace-nowrap text-right border-l">
@@ -246,46 +269,75 @@
                                     <td class="px-4 py-2 whitespace-nowrap">Hospitalario ({{ $ciclo->porcentaje_hospitalario }}%)</td>
                                     @php
                                         $totalValorHospitalario = 0;
+                                        // Calcular el factor basado en la meta actual
+                                        $metaActual = $ciclo->objetivo * $ciclo->dias_habiles;
+                                        $factor = $metaActual >= 140 ? 1 : ($metaActual / 140);
                                     @endphp
                                     @foreach($productos as $producto)
                                         @php
-                                            $totalProducto = collect($detallesPorRepresentante)
+                                            $cantidadHospitalaria = collect($detallesPorRepresentante)
                                                 ->flatten(1)
                                                 ->where('producto_id', $producto->id)
-                                                ->sum('cantidad_total');
-                                            $hospitalario = round($totalProducto * ($ciclo->porcentaje_hospitalario / 100));
-                                            $valorHospitalario = $producto && $producto->valor ? $hospitalario * $producto->valor : 0;
+                                                ->sum(function($detalle) {
+                                                    $doctoresCount = $detalle->representante->doctors()
+                                                        ->where('medical_specialty_id', $detalle->especialidad_id)
+                                                        ->value('doctors_count');
+                                                    return ceil($detalle->cantidad_por_doctor * $doctoresCount * ($detalle->ciclo->porcentaje_hospitalario / 100));
+                                                });
+                                            
+                                            $cantidadConFactor = ceil($cantidadHospitalaria * $factor);
+                                            $valorHospitalario = $cantidadConFactor * $producto->valor;
                                             $totalValorHospitalario += $valorHospitalario;
                                         @endphp
                                         <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                            {{ $hospitalario > 0 ? $hospitalario : '-' }}
+                                            {{ $cantidadHospitalaria > 0 ? $cantidadConFactor : '-' }}
+                                            @if($producto && $producto->valor && $cantidadHospitalaria > 0)
+                                                <div class="text-xs text-gray-500">
+                                                    (${{ number_format($valorHospitalario, 2) }})
+                                                </div>
+                                            @endif
                                         </td>
                                     @endforeach
                                     <td class="px-4 py-2 whitespace-nowrap text-right border-l">
                                         ${{ number_format($totalValorHospitalario, 2) }}
                                     </td>
                                 </tr>
-                                <!-- Fila de totales -->
-                                <tr class="bg-gray-50 font-semibold">
+                                <!-- Fila de total -->
+                                <tr class="bg-gray-200 font-bold">
                                     <td class="px-4 py-2 whitespace-nowrap">Total</td>
                                     @php
                                         $valorTotalGeneral = 0;
                                     @endphp
                                     @foreach($productos as $producto)
                                         @php
-                                            $totalProducto = collect($detallesPorRepresentante)
+                                            $cantidadBase = collect($detallesPorRepresentante)
                                                 ->flatten(1)
                                                 ->where('producto_id', $producto->id)
-                                                ->sum('cantidad_total');
-                                            $granTotal = $totalProducto * (1 + ($ciclo->porcentaje_hospitalario / 100));
-                                            $valorTotal = $producto && $producto->valor ? $granTotal * $producto->valor : 0;
+                                                ->sum(function($detalle) {
+                                                    $doctoresCount = $detalle->representante->doctors()
+                                                        ->where('medical_specialty_id', $detalle->especialidad_id)
+                                                        ->value('doctors_count');
+                                                    return $detalle->cantidad_por_doctor * $doctoresCount;
+                                                });
+                                            
+                                            $cantidadHospitalaria = ceil($cantidadBase * ($ciclo->porcentaje_hospitalario / 100));
+                                            $cantidadTotal = $cantidadBase + $cantidadHospitalaria;
+                                            
+                                            // Aplicar factor al total
+                                            $cantidadConFactor = ceil($cantidadTotal * $factor);
+                                            $valorTotal = $cantidadConFactor * $producto->valor;
                                             $valorTotalGeneral += $valorTotal;
                                         @endphp
                                         <td class="px-4 py-2 whitespace-nowrap text-center border-l">
-                                            {{ $granTotal > 0 ? round($granTotal) : '-' }}
+                                            {{ $cantidadConFactor }}
+                                            @if($producto && $producto->valor)
+                                                <div class="text-xs text-gray-500">
+                                                    (${{ number_format($valorTotal, 2) }})
+                                                </div>
+                                            @endif
                                         </td>
                                     @endforeach
-                                    <td class="px-4 py-2 whitespace-nowrap text-right border-l font-bold">
+                                    <td class="px-4 py-2 whitespace-nowrap text-right border-l">
                                         ${{ number_format($valorTotalGeneral, 2) }}
                                     </td>
                                 </tr>
@@ -294,67 +346,68 @@
                     </div>
                 </div>
 
-                    <!-- Resumen Total por Productos -->
+                    <!-- Productos Entregados -->
                     <div class="mt-8">
-                    <h3 class="text-lg font-semibold mb-4">Productos Entregados</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead>
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Entregados</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"><strong>Valor Unitario</strong></th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"><strong>Valor Total</strong></th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @php
-                                    $resumenPorProducto = collect($detallesPorRepresentante)
-                                        ->flatten(1)
-                                        ->groupBy('producto_id')
-                                        ->map(function ($grupo) {
-                                            return $grupo->sum('cantidad_total');
-                                        });
-                                    $totalValorGeneral = 0;
-                                @endphp
-                        
-                                @foreach($resumenPorProducto as $productoId => $total)
-                                    @php
-                                        $producto = \App\Models\Product::find($productoId);
-                                        $totalConHospitalario = round($total * (1 + $ciclo->porcentaje_hospitalario / 100));
-                                        $valorTotal = $producto ? $totalConHospitalario * $producto->valor : 0;
-                                        $totalValorGeneral += $valorTotal;
-                                    @endphp
-                                    <tr>
-                                        <td class="px-4 py-2 whitespace-nowrap">{{ $producto ? $producto->name : 'Producto eliminado' }}</td>
-                                        <td class="px-4 py-2 whitespace-nowrap text-center">{{ $totalConHospitalario }}</td>
-                                        <td class="px-4 py-2 whitespace-nowrap text-right">
-                                            @if($producto && $producto->valor)
-                                                ${{ number_format($producto->valor, 2) }}
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-2 whitespace-nowrap text-right">
-                                            @if($producto && $producto->valor)
-                                                ${{ number_format($valorTotal, 2) }}
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
+                        <h3 class="text-lg font-semibold mb-4">Productos Entregados</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full table-auto">
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="px-4 py-2 text-left">Producto</th>
+                                        <th class="px-4 py-2 text-center">Total Entregados</th>
+                                        <th class="px-4 py-2 text-center">Valor Unitario</th>
+                                        <th class="px-4 py-2 text-right">Valor Total</th>
                                     </tr>
-                                @endforeach
-
-                                <tr class="bg-gray-50 font-semibold">
-                                    <td class="px-4 py-2 whitespace-nowrap">Total General</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-center">{{ round($resumenPorProducto->sum() * (1 + $ciclo->porcentaje_hospitalario / 100)) }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-right">-</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-right">${{ number_format($totalValorGeneral, 2) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @php
+                                        $totalGeneral = 0;
+                                        $totalProductos = 0;
+                                        // Calcular el factor basado en la meta actual
+                                        $metaActual = $ciclo->objetivo * $ciclo->dias_habiles;
+                                        $factor = $metaActual >= 140 ? 1 : ($metaActual / 140);
+                                    @endphp
+                                    @foreach($detallesPorRepresentante->flatten()->groupBy('producto_id') as $productoId => $detalles)
+                                        @php
+                                            $producto = $detalles->first()->producto;
+                                            $cantidadTotal = 0;
+                                            $cantidadConFactor = 0;
+                                            
+                                            foreach($detalles as $detalle) {
+                                                $doctoresCount = $detalle->representante->doctors()
+                                                    ->where('medical_specialty_id', $detalle->especialidad_id)
+                                                    ->value('doctors_count');
+                                                $cantidadBase = $detalle->cantidad_por_doctor * $doctoresCount;
+                                                $cantidadHospitalario = ceil($cantidadBase * ($ciclo->porcentaje_hospitalario / 100));
+                                                $cantidadTotal = $cantidadBase + $cantidadHospitalario;
+                                                $cantidadConFactor = ceil($cantidadTotal * $factor);
+                                                
+                                                $valorBase = $cantidadBase * $detalle->producto->valor;
+                                                $valorHospitalario = $cantidadHospitalario * $detalle->producto->valor;
+                                                $valorTotal = $cantidadTotal * $detalle->producto->valor;
+                                            }
+                                            
+                                            $valorTotal = $cantidadConFactor * $producto->valor;
+                                            $totalGeneral += $valorTotal;
+                                            $totalProductos += $cantidadConFactor;
+                                        @endphp
+                                        <tr>
+                                            <td class="border px-4 py-2">{{ $producto->name }}</td>
+                                            <td class="border px-4 py-2 text-center">{{ $cantidadConFactor }}</td>
+                                            <td class="border px-4 py-2 text-center">${{ number_format($producto->valor, 2) }}</td>
+                                            <td class="border px-4 py-2 text-right">${{ number_format($valorTotal, 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                    <tr class="font-bold">
+                                        <td class="border px-4 py-2">Total General</td>
+                                        <td class="border px-4 py-2 text-center">{{ $totalProductos }}</td>
+                                        <td class="border px-4 py-2 text-center">-</td>
+                                        <td class="border px-4 py-2 text-right">${{ number_format($totalGeneral, 2) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>
