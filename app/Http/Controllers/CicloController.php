@@ -131,14 +131,22 @@ class CicloController extends Controller
                 'representantes' => 'required|array|min:1',
                 'porcentaje_hospitalario' => 'required|numeric|min:0|max:100',
                 'detalles' => 'required|array|min:1',
-                'nombre' => 'required|string'
+                'nombre' => 'required|string',
+                'objetivo' => 'required|numeric|min:1|max:7',
+                'dias_habiles' => 'required|numeric|min:1|max:31'
             ]);
+
+            // Calcular el factor basado en la meta
+            $metaActual = $request->objetivo * min($request->dias_habiles, 20);
+            $factor = $metaActual >= 140 ? 1 : ($metaActual / 140);
 
             $ciclo = Ciclo::create([
                 'fecha_inicio' => now(),
                 'fecha_fin' => null,
                 'porcentaje_hospitalario' => $request->porcentaje_hospitalario,
-                'nombre' => $request->nombre
+                'nombre' => $request->nombre,
+                'objetivo' => $request->objetivo,
+                'dias_habiles' => $request->dias_habiles
             ]);
 
             foreach ($request->detalles as $detalle) {
@@ -149,7 +157,8 @@ class CicloController extends Controller
                     ->where('medical_specialty_id', $detalle['especialidad_id'])
                     ->value('doctors_count') ?? 0;
 
-                $cantidadTotal = $detalle['cantidad_por_doctor'] * $cantidadDoctores;
+                // Aplicar el factor basado en la meta
+                $cantidadTotal = ceil($detalle['cantidad_por_doctor'] * $cantidadDoctores * $factor);
                 $cantidadConPorcentaje = ceil($cantidadTotal * (1 + ($request->porcentaje_hospitalario / 100)));
 
                 $ciclo->detallesCiclo()->create([

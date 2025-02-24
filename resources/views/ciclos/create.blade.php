@@ -131,12 +131,15 @@
                                         <i class="fas fa-info-circle"></i>
                                     </span>
                                 </label>
-                                <span id="meta_actual" class="text-sm font-semibold">140 (100%)</span>
+                                <span id="meta_actual" class="text-sm font-semibold">0 (0%)</span>
                             </div>
-                            <div class="mt-2 relative pt-1">
-                                <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
-                                    <div id="meta-progress" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500" style="width: 100%"></div>
-                                </div>
+                            <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="meta-progress" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500" style="width: 0%"></div>
+                            </div>
+                            <div id="factor_texto" class="hidden text-sm text-gray-700 mt-2">
+                                Se aplicará un factor de eficiencia del
+                                <span id="factor_valor" class="font-bold"></span>
+                                a la cantidad de productos
                             </div>
                         </div>
 
@@ -594,7 +597,7 @@
             });
 
             // Función para calcular el porcentaje y actualizar cantidades
-            function actualizarCantidades() {
+            function actualizarMetaYFactor() {
                 const objetivo = parseInt(document.getElementById('objetivo').value) || 0;
                 const diasHabiles = parseInt(document.getElementById('dias_habiles').value) || 0;
                 const diasMaximos = 20; // Máximo de días efectivos para el cálculo
@@ -619,27 +622,21 @@
                 const progressBar = document.getElementById('meta-progress');
                 progressBar.style.width = `${Math.min(porcentajeFormateado, 100)}%`;
                 progressBar.style.backgroundColor = porcentajeFormateado >= 100 ? '#10B981' : '#3B82F6';
-                
-                // Actualizar cantidades de productos
-                document.querySelectorAll('.cantidad-input').forEach(input => {
-                    const cantidadOriginal = parseInt(input.getAttribute('data-cantidad-original')) || parseInt(input.value) || 1;
-                    if (!input.hasAttribute('data-cantidad-original')) {
-                        input.setAttribute('data-cantidad-original', cantidadOriginal);
-                    }
-                    const nuevaCantidad = Math.max(1, Math.round(cantidadOriginal * (porcentaje / 100)));
-                    input.value = nuevaCantidad;
-                    
-                    // Resaltar cambios en las cantidades
-                    const esReduccion = nuevaCantidad < cantidadOriginal;
-                    input.classList.remove('bg-yellow-50', 'bg-red-50');
-                    input.classList.add(esReduccion ? 'bg-red-50' : 'bg-yellow-50');
-                    setTimeout(() => input.classList.remove('bg-yellow-50', 'bg-red-50'), 500);
-                });
+
+                // Mostrar el factor que se aplicará solo si es menor al 100%
+                const factorTexto = document.getElementById('factor_texto');
+                const factorValor = document.getElementById('factor_valor');
+                if (porcentajeFormateado < 100) {
+                    factorTexto.classList.remove('hidden');
+                    factorValor.textContent = porcentajeFormateado + '%';
+                } else {
+                    factorTexto.classList.add('hidden');
+                }
             }
 
             // Agregar event listeners para los campos de objetivo y días hábiles
-            document.getElementById('objetivo').addEventListener('input', actualizarCantidades);
-            document.getElementById('dias_habiles').addEventListener('input', actualizarCantidades);
+            document.getElementById('objetivo').addEventListener('input', actualizarMetaYFactor);
+            document.getElementById('dias_habiles').addEventListener('input', actualizarMetaYFactor);
 
             // Evento para cargar ciclos cuando se selecciona un año
             document.getElementById('año-selector').addEventListener('change', function() {
@@ -719,7 +716,7 @@
                         document.getElementById('dias_habiles').value = data.dias_habiles;
 
                         // Actualizar cantidades según objetivo y días
-                        actualizarCantidades();
+                        actualizarMetaYFactor();
 
                         // Mostrar mensaje de éxito
                         alert('Configuración cargada exitosamente');
