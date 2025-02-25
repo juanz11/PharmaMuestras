@@ -219,6 +219,14 @@
                                 @foreach($detallesPorRepresentante as $representanteId => $detalles)
                                     @php
                                         $valorTotalRepresentante = 0;
+                                        foreach($productos as $producto) {
+                                            $totalProducto = $detalles
+                                                ->where('producto_id', $producto->id)
+                                                ->sum('cantidad_total');
+                                            $totalProductoConHospitalario = round($totalProducto + ($totalProducto * ($ciclo->porcentaje_hospitalario / 100)));
+                                            $valorProducto = $producto && $producto->valor ? $totalProductoConHospitalario * $producto->valor : 0;
+                                            $valorTotalRepresentante += $valorProducto;
+                                        }
                                     @endphp
                                     <tr>
                                         <td class="px-4 py-2 whitespace-nowrap">
@@ -231,14 +239,13 @@
                                                     ->sum('cantidad_total');
                                                 $totalProductoConHospitalario = round($totalProducto + ($totalProducto * ($ciclo->porcentaje_hospitalario / 100)));
                                                 $valorProducto = $producto && $producto->valor ? $totalProductoConHospitalario * $producto->valor : 0;
-                                                $valorTotalRepresentante += $valorProducto;
                                             @endphp
                                             <td class="px-4 py-2 whitespace-nowrap text-center border-l">
                                                 {{ $totalProductoConHospitalario > 0 ? $totalProductoConHospitalario : '-' }}
                                             </td>
                                         @endforeach
                                         <td class="px-4 py-2 whitespace-nowrap text-right border-l">
-                                            ${{ number_format($valorTotalRepresentante, 2) }}
+                                            <strong>${{ number_format($valorTotalRepresentante, 2) }}</strong>
                                         </td>
                                     </tr>
                                 @endforeach
