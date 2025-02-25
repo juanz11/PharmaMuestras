@@ -258,44 +258,38 @@
                     <tr style="background-color: #f8f9fa;">
                         <td class="representante-column">Total</td>
                         @php
-                            $totalesPorRepresentante = [];
+                            $totalesColumnas = [];
                             $valorTotalGeneral = 0;
-                            foreach($detallesPorRepresentante as $representanteId => $detalles) {
-                                $totalRepresentante = 0;
-                                $valorRepresentante = 0;
-                                foreach($productos as $producto) {
+                            
+                            // Primero calculamos los totales redondeados por columna
+                            foreach($productos as $producto) {
+                                $totalColumna = 0;
+                                foreach($detallesPorRepresentante as $detalles) {
                                     $totalProducto = $detalles
                                         ->where('producto_id', $producto->id)
                                         ->sum('cantidad_total');
-                                    $totalConHospitalario = round($totalProducto * (1 + ($ciclo->porcentaje_hospitalario / 100)));
-                                    $totalRepresentante += $totalConHospitalario;
-                                    
-                                    if ($producto && $producto->valor) {
-                                        $valorRepresentante += $totalConHospitalario * $producto->valor;
-                                    }
+                                    $totalConHospitalario = $totalProducto * (1 + ($ciclo->porcentaje_hospitalario / 100));
+                                    $totalColumna += round($totalConHospitalario);
                                 }
-                                $totalesPorRepresentante[] = $totalRepresentante;
-                                $valorTotalGeneral += $valorRepresentante;
+                                $totalesColumnas[] = $totalColumna;
+                                
+                                // Calculamos el valor total general
+                                if ($producto && $producto->valor) {
+                                    $valorTotalGeneral += $totalColumna * $producto->valor;
+                                }
                             }
-                            $totalGeneral = array_sum($totalesPorRepresentante);
                         @endphp
-                        @foreach($productos as $producto)
-                            @php
-                                $totalProducto = collect($detallesPorRepresentante)
-                                    ->flatten(1)
-                                    ->where('producto_id', $producto->id)
-                                    ->sum('cantidad_total');
-                                $totalConHospitalario = $totalProducto * (1 + ($ciclo->porcentaje_hospitalario / 100));
-                            @endphp
+                        
+                        @foreach($totalesColumnas as $total)
                             <td style="text-align: center;">
-                                {{ $totalConHospitalario > 0 ? round($totalConHospitalario) : '-' }}
+                                {{ $total > 0 ? $total : '-' }}
                             </td>
                         @endforeach
                         <td style="text-align: right; font-weight: bold;">
                             ${{ number_format($valorTotalGeneral, 2) }}
                         </td>
                         <td style="text-align: right; font-weight: bold;">
-                            {{ $totalGeneral }}
+                            {{ array_sum($totalesColumnas) }}
                         </td>
                     </tr>
                 </tbody>
