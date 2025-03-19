@@ -8,6 +8,7 @@ use App\Http\Controllers\MedicalSpecialtyController;
 use App\Http\Controllers\RepresentativeController;
 use App\Http\Controllers\CicloController;
 use App\Http\Controllers\DetalleCicloController;
+use App\Http\Controllers\ReportController;
 use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\SuperAdmin;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +50,10 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
     Route::put('/ciclos/{ciclo}/completar-entrega', [CicloController::class, 'completarEntrega'])->name('ciclos.completar-entrega');
     Route::patch('/ciclos/{ciclo}/update-descargo', [CicloController::class, 'updateDescargo'])->name('ciclos.update-descargo');
     Route::get('/ciclos/por-año/{año}', [CicloController::class, 'getCiclosPorAño'])->name('ciclos.por-año');
+
+    // Rutas de reportes
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/cycles', [ReportController::class, 'getCycleReport'])->name('reports.cycles');
 });
 
 Route::middleware(['auth'])->group(function () {
