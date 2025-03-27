@@ -517,13 +517,19 @@
                             warning.textContent = mensaje;
                             warning.style.display = 'inline';
                             cantidadInput.classList.add('border-red-500');
+                            // Ocultar el botón guardar cuando hay advertencia de inventario insuficiente
+                            document.getElementById('guardar').style.display = 'none';
                         } else if (totalDoctores === 0) {
                             warning.textContent = 'Seleccione al menos un representante con doctores en esta especialidad';
                             warning.style.display = 'inline';
                             cantidadInput.classList.add('border-red-500');
+                            // Mostrar el botón guardar ya que este error no está relacionado con el inventario
+                            document.getElementById('guardar').style.display = 'block';
                         } else {
                             warning.style.display = 'none';
                             cantidadInput.classList.remove('border-red-500');
+                            // Mostrar el botón guardar cuando no hay errores
+                            document.getElementById('guardar').style.display = 'block';
                         }
                     }
                 }
