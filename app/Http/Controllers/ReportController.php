@@ -8,6 +8,7 @@ use App\Models\DetalleCiclo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -94,6 +95,66 @@ class ReportController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        try {
+            $productos = Product::orderBy('name')->get();
+            $cycles = Ciclo::with(['detalles.producto'])
+                ->where(function($query) use ($request) {
+                    $query->whereBetween('fecha_inicio', [$request->start_date, $request->end_date])
+                        ->orWhereBetween('fecha_fin', [$request->start_date, $request->end_date]);
+                })
+                ->orderBy('fecha_inicio')
+                ->get();
+
+            $ciclosData = [];
+            $totalPorProducto = array_fill_keys($productos->pluck('id')->toArray(), 0);
+            $costoTotalGeneral = 0;
+
+            foreach ($cycles as $ciclo) {
+                $cantidadesPorProducto = array_fill_keys($productos->pluck('id')->toArray(), 0);
+                $costoTotal = 0;
+
+                foreach ($ciclo->detalles as $detalle) {
+                    if ($detalle->producto && $detalle->cantidad_con_porcentaje > 0) {
+                        $cantidadesPorProducto[$detalle->producto_id] += $detalle->cantidad_con_porcentaje;
+                        $totalPorProducto[$detalle->producto_id] += $detalle->cantidad_con_porcentaje;
+                        $costoTotal += $detalle->cantidad_con_porcentaje * ($detalle->producto->valor ?? 0);
+                    }
+                }
+
+                $costoTotalGeneral += $costoTotal;
+
+                $ciclo->cantidades = $cantidadesPorProducto;
+                $ciclo->costo_total = $costoTotal;
+                $ciclosData[] = $ciclo;
+            }
+
+            $data = [
+                'productos' => $productos,
+                'ciclos' => $ciclosData,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'totales' => [
+                    'cantidades' => $totalPorProducto,
+                    'costo_total' => $costoTotalGeneral
+                ]
+            ];
+
+            $pdf = PDF::loadView('reports.pdf.cycles', $data);
+            $pdf->setPaper('a4', 'landscape');
+            return $pdf->download('reporte-ciclos-' . $request->start_date . '-' . $request->end_date . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('Error in PDF export: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al generar el PDF'], 500);
         }
     }
 }

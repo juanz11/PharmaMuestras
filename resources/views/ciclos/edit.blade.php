@@ -11,6 +11,7 @@
                 <form id="ciclo-form" action="{{ route('ciclos.update', $ciclo) }}" method="POST">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="nombre" value="{{ $ciclo->nombre }}">
 
                     <!-- Paso 1: Selección de Representantes -->
                     <div class="mb-8" id="paso1">
@@ -173,6 +174,7 @@
                     const formData = {
                         _token: document.querySelector('input[name="_token"]').value,
                         _method: 'PUT',
+                        nombre: document.querySelector('input[name="nombre"]').value,
                         porcentaje_hospitalario: document.getElementById('porcentaje_hospitalario').value,
                         detalles: []
                     };

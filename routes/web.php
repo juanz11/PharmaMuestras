@@ -54,6 +54,8 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
     // Rutas de reportes
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/cycles', [ReportController::class, 'getCycleReport'])->name('reports.cycles');
+    Route::get('/reports/cycles/export-pdf', [ReportController::class, 'exportPdf'])->name('reports.cycles.pdf');
+
 });
 
 Route::middleware(['auth'])->group(function () {
