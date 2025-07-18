@@ -282,7 +282,15 @@
                 btnGuardar.style.display = 'none';
             });
 
-            btnGuardar.addEventListener('click', async function(e) {
+            let isSubmitting = false;
+btnGuardar.addEventListener('click', async function(e) {
+                if (isSubmitting) {
+                    e.preventDefault();
+                    return;
+                }
+                isSubmitting = true;
+                btnGuardar.disabled = true;
+                btnGuardar.style.opacity = '0.5';
                 e.preventDefault();
                 
                 const productos = document.querySelectorAll('.producto-div');
@@ -396,6 +404,9 @@
                 } catch (error) {
                     console.error('Error:', error);
                     alert(error.message || 'Error al guardar el ciclo');
+                    isSubmitting = false;
+                    btnGuardar.disabled = false;
+                    btnGuardar.style.opacity = '1';
                 }
             });
 
