@@ -481,8 +481,10 @@ btnGuardar.addEventListener('click', async function(e) {
                         representantesSeleccionados.forEach(rep => {
                             try {
                                 const doctores = JSON.parse(rep.dataset.doctors);
-                                const doctoresEspecialidad = doctores.filter(d => parseInt(d.medical_specialty_id) === parseInt(especialidadId));
-                                totalDoctores += doctoresEspecialidad.length;
+                                const doctoresEspecialidad = doctores.find(d => parseInt(d.medical_specialty_id) === parseInt(especialidadId));
+                                if (doctoresEspecialidad) {
+                                    totalDoctores += doctoresEspecialidad.doctors_count || 0;
+                                }
                             } catch (error) {
                                 console.error('Error al procesar doctores:', error);
                             }
@@ -492,43 +494,44 @@ btnGuardar.addEventListener('click', async function(e) {
                         const cantidadBase = cantidad * totalDoctores;
                         
                         // Sumar todas las cantidades del mismo producto en otras especialidades
-                        let cantidadTotalProducto = cantidadBase;
-                        document.querySelectorAll('.especialidad-div').forEach(otherEspDiv => {
-                            if (otherEspDiv !== especialidadDiv) {
-                                otherEspDiv.querySelectorAll('.producto-select').forEach(otherSelect => {
-                                    if (otherSelect.value === productoId) {
-                                        const otherCantidad = parseInt(otherSelect.closest('.flex').querySelector('.cantidad-input').value) || 0;
-                                        const otherEspId = otherEspDiv.dataset.especialidadId;
-                                        let otherDoctores = 0;
-                                        
-                                        representantesSeleccionados.forEach(rep => {
-                                            try {
-                                                const doctores = JSON.parse(rep.dataset.doctors);
-                                                const doctoresOtraEsp = doctores.filter(d => parseInt(d.medical_specialty_id) === parseInt(otherEspId));
-                                                otherDoctores += doctoresOtraEsp.length;
-                                            } catch (error) {
-                                                console.error('Error al procesar doctores de otra especialidad:', error);
+                        let cantidadTotalProducto = 0;
+                        document.querySelectorAll('.especialidad-div').forEach(espDiv => {
+                            espDiv.querySelectorAll('.producto-select').forEach(select => {
+                                if (select.value === productoId) {
+                                    const cantidadInput = select.closest('.flex').querySelector('.cantidad-input');
+                                    const cantidad = parseInt(cantidadInput.value) || 0;
+                                    
+                                    // Calcular doctores para esta especialidad
+                                    let doctoresEspecialidad = 0;
+                                    const espId = espDiv.dataset.especialidadId;
+                                    representantesSeleccionados.forEach(rep => {
+                                        try {
+                                            const doctores = JSON.parse(rep.dataset.doctors);
+                                            const doctorRecord = doctores.find(d => parseInt(d.medical_specialty_id) === parseInt(espId));
+                                            if (doctorRecord) {
+                                                doctoresEspecialidad += doctorRecord.doctors_count || 0;
                                             }
-                                        });
-                                        
-                                        cantidadTotalProducto += (otherCantidad * otherDoctores);
-                                    }
-                                });
-                            }
+                                        } catch (error) {
+                                            console.error('Error al procesar doctores:', error);
+                                        }
+                                    });
+                                    
+                                    cantidadTotalProducto += cantidad * doctoresEspecialidad;
+                                }
+                            });
                         });
-                        
-                        // Calcular cantidad adicional por porcentaje hospitalario sobre el total
-                        const cantidadAdicional = Math.round(cantidadTotalProducto * (porcentajeHospitalario / 100));
-                        
-                        // Cantidad total incluyendo el porcentaje hospitalario
+
+                        // Calcular cantidad adicional por porcentaje hospitalario
+                        const cantidadAdicional = Math.ceil(cantidadTotalProducto * (porcentajeHospitalario / 100));
                         const cantidadTotal = cantidadTotalProducto + cantidadAdicional;
-                        
+
+                        // Verificar si excede el stock disponible
                         if (cantidadTotal > disponible) {
                             const mensaje = `Advertencia: Cantidad total necesaria (${cantidadTotalProducto} total entre todas las especialidades) + ${cantidadAdicional} (${porcentajeHospitalario}% hospitalario) = ${cantidadTotal}, excede el inventario disponible (${disponible})`;
                             warning.textContent = mensaje;
-                            warning.style.display = 'inline';
-                            cantidadInput.classList.add('border-red-500');
-                            // Ocultar el botón guardar cuando hay advertencia de inventario insuficiente
+                            warning.style.display = 'block';
+                            cantidadInput.setCustomValidity('La cantidad excede el inventario disponible');
+                            cantidadInput.reportValidity();
                             document.getElementById('guardar').style.display = 'none';
                         } else if (totalDoctores === 0) {
                             warning.textContent = 'Seleccione al menos un representante con doctores en esta especialidad';
