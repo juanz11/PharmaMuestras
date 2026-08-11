@@ -12,6 +12,8 @@ use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\SuperAdmin;
 use Illuminate\Support\Facades\Route;
 
+require __DIR__.'/auth.php';
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -63,5 +65,3 @@ Route::group(['middleware' => ['auth', CheckUserActive::class, SuperAdmin::class
     Route::post('/users/{user}/deactivate', [UserManagementController::class, 'deactivate'])->name('users.deactivate');
     Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
 });
-
-require __DIR__.'/auth.php';
