@@ -138,7 +138,7 @@ class CicloController extends Controller
 
             // Calcular el factor basado en la meta
             $metaActual = $request->objetivo * min($request->dias_habiles, 20);
-            $factor = $metaActual >= 140 ? 1 : ($metaActual / 140);
+            $factor = $metaActual >= 150 ? 1 : ($metaActual / 150);
 
             $ciclo = Ciclo::create([
                 'fecha_inicio' => now(),

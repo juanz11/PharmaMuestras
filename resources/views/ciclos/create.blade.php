@@ -118,11 +118,11 @@
                             <div class="flex items-center justify-between mb-2">
                                 <label class="block text-sm font-medium text-gray-700">
                                     Meta Total:
-                                    <span class="text-xs text-gray-500 ml-1" title="Meta base: 20 días * 7 objetivos = 140">
+                                    <span class="text-xs text-gray-500 ml-1" title="Meta base: 150">
                                         <i class="fas fa-info-circle"></i>
                                     </span>
                                 </label>
-                                <span id="meta_total" class="text-sm font-semibold">140 (100%)</span>
+                                <span id="meta_total" class="text-sm font-semibold">150 (100%)</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <label class="block text-sm font-medium text-gray-700">
@@ -601,7 +601,7 @@
                 const objetivo = parseInt(document.getElementById('objetivo').value) || 0;
                 const diasHabiles = parseInt(document.getElementById('dias_habiles').value) || 0;
                 const diasMaximos = 20; // Máximo de días efectivos para el cálculo
-                const metaTotal = 140; // 20 días * 7 objetivos
+                const metaTotal = 150; // Meta total base
                 const diasCalculados = Math.min(diasHabiles, diasMaximos); // Limitar a 20 días máximo
                 const metaActual = objetivo * diasCalculados;
                 
