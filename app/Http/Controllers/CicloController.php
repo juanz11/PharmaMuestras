@@ -132,12 +132,14 @@ class CicloController extends Controller
                 'porcentaje_hospitalario' => 'required|numeric|min:0|max:100',
                 'detalles' => 'required|array|min:1',
                 'nombre' => 'required|string',
-                'objetivo' => 'required|numeric|min:1|max:7',
+                'objetivo' => 'required|numeric|between:1,9|decimal:0,2',
                 'dias_habiles' => 'required|numeric|min:1|max:31'
             ]);
 
+            $objetivo = round($request->objetivo, 2);
+
             // Calcular el factor basado en la meta
-            $metaActual = $request->objetivo * min($request->dias_habiles, 20);
+            $metaActual = round($objetivo * min($request->dias_habiles, 20), 2);
             $factor = $metaActual >= 150 ? 1 : ($metaActual / 150);
 
             $ciclo = Ciclo::create([
@@ -145,7 +147,7 @@ class CicloController extends Controller
                 'fecha_fin' => null,
                 'porcentaje_hospitalario' => $request->porcentaje_hospitalario,
                 'nombre' => $request->nombre,
-                'objetivo' => $request->objetivo,
+                'objetivo' => $objetivo,
                 'dias_habiles' => $request->dias_habiles
             ]);
 

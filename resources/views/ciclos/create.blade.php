@@ -78,8 +78,8 @@
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Objetivo visita diaria (1-7):
-                                    <span class="text-xs text-gray-500 ml-1" title="Número de médicos a visitar por día">
+                                    Objetivo visita diaria (1-9):
+                                    <span class="text-xs text-gray-500 ml-1" title="Número de médicos a visitar por día, hasta 2 decimales">
                                         <i class="fas fa-info-circle"></i>
                                     </span>
                                 </label>
@@ -87,12 +87,14 @@
                                     id="objetivo" 
                                     name="objetivo" 
                                     min="1" 
-                                    max="7" 
+                                    max="9" 
+                                    step="0.01"
+                                    inputmode="decimal"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
                                     required 
-                                    value="7"
-                                    title="Ingrese un número entre 1 y 7">
-                                <div id="objetivo-error" class="text-red-500 text-xs mt-1 hidden">El objetivo debe estar entre 1 y 7</div>
+                                    value="7.00"
+                                    title="Ingrese un número entre 1 y 9 con hasta 2 decimales">
+                                <div id="objetivo-error" class="text-red-500 text-xs mt-1 hidden">El objetivo debe estar entre 1 y 9, con máximo 2 decimales</div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -127,7 +129,7 @@
                             <div class="flex items-center justify-between">
                                 <label class="block text-sm font-medium text-gray-700">
                                     Meta Actual:
-                                    <span class="text-xs text-gray-500 ml-1" title="Calculado como: días hábiles * objetivo">
+                                    <span class="text-xs text-gray-500 ml-1" title="Calculado como: días hábiles * objetivo, con 2 decimales">
                                         <i class="fas fa-info-circle"></i>
                                     </span>
                                 </label>
@@ -598,26 +600,26 @@
 
             // Función para calcular el porcentaje y actualizar cantidades
             function actualizarMetaYFactor() {
-                const objetivo = parseInt(document.getElementById('objetivo').value) || 0;
+                const objetivo = parseFloat(document.getElementById('objetivo').value) || 0;
                 const diasHabiles = parseInt(document.getElementById('dias_habiles').value) || 0;
                 const diasMaximos = 20; // Máximo de días efectivos para el cálculo
                 const metaTotal = 150; // Meta total base
                 const diasCalculados = Math.min(diasHabiles, diasMaximos); // Limitar a 20 días máximo
-                const metaActual = objetivo * diasCalculados;
+                const metaActual = parseFloat((objetivo * diasCalculados).toFixed(2));
                 
                 // Validación de inputs
                 const objetivoError = document.getElementById('objetivo-error');
                 const diasError = document.getElementById('dias-error');
                 
-                objetivoError.classList.toggle('hidden', objetivo >= 1 && objetivo <= 7);
+                objetivoError.classList.toggle('hidden', objetivo >= 1 && objetivo <= 9);
                 diasError.classList.toggle('hidden', diasHabiles >= 1 && diasHabiles <= 31);
                 
                 // Actualizar metas y barra de progreso
                 const porcentaje = (metaActual / metaTotal) * 100;
-                const porcentajeFormateado = Math.min(Math.round(porcentaje * 10) / 10, 100);
+                const porcentajeFormateado = Math.min(parseFloat(porcentaje.toFixed(2)), 100);
                 
                 document.getElementById('meta_total').textContent = `${metaTotal} (100%)`;
-                document.getElementById('meta_actual').textContent = `${metaActual} (${porcentajeFormateado}%)`;
+                document.getElementById('meta_actual').textContent = `${metaActual.toFixed(2)} (${porcentajeFormateado.toFixed(2)}%)`;
                 
                 const progressBar = document.getElementById('meta-progress');
                 progressBar.style.width = `${Math.min(porcentajeFormateado, 100)}%`;
